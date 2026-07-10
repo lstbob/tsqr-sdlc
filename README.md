@@ -27,9 +27,11 @@ tsqr-sdlc/
 
 ---
 
-## Sprint Plan (19 Sprints × 5 SP max per 2-week sprint)
+## Sprint Backlog (19 Sprints × 5 SP max per 2-week sprint)
 
 **Capacity:** 1 developer, max 5 story points per sprint.
+
+> **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
 ### Sprint 1 (Jul 10–23)
 | Item | SP | Repo |
@@ -131,6 +133,14 @@ tsqr-sdlc/
 | Schema + query hardening | 5 | support [#2](https://github.com/lstbob/tsqr-support/issues/2) |
 
 **Total: 95 SP across 19 sprints**
+
+### Sprint Backlog & Board Structure
+
+| Board Level | What | Sprint Assignment | Purpose |
+|-------------|------|-------------------|---------|
+| **Parent grouping issues** (6) | #30, #32, comm#1, SK#1, id#1, sup#1 | *None* | Sub-issues Progress auto-computed, high-level tracking |
+| **Sub-issues** (14) | Individual work items linked to parents | **Sprint 1–18** | Actionable sprint backlog — drag through status columns |
+| **Standalone issues** (9) | #31, comm#2–3, SK#2–3, id#2, autheo#1–2, sup#2 | **Sprint 3–19** | Actionable sprint backlog — drag through status columns |
 
 ---
 
