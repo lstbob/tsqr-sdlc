@@ -34,44 +34,44 @@ tsqr-sdlc/
 ### Sprint 1 (Jul 10–23)
 | Item | SP | Repo |
 |------|----|------|
-| 1a — Refactor cross-aggregate transactions | 5 | tool-lib [#33](https://github.com/lstbob/tsqr-tool-lib/issues/33) |
+| Cross-aggregate transaction refactoring | 5 | tool-lib [#33](https://github.com/lstbob/tsqr-tool-lib/issues/33) |
 
 ### Sprint 2 (Jul 24–Aug 6)
 | Item | SP | Repo |
 |------|----|------|
-| 1b — Wire domain events + ReservationQueueService | 5 | tool-lib [#34](https://github.com/lstbob/tsqr-tool-lib/issues/34) |
+| Domain event wiring + ReservationQueueService | 5 | tool-lib [#34](https://github.com/lstbob/tsqr-tool-lib/issues/34) |
 
 ### Sprint 3 (Aug 7–20)
 | Item | SP | Repo |
 |------|----|------|
-| 1c — Integrate Policy aggregate + FineService | 3 | tool-lib [#35](https://github.com/lstbob/tsqr-tool-lib/issues/35) |
+| Policy aggregate + FineService integration | 3 | tool-lib [#35](https://github.com/lstbob/tsqr-tool-lib/issues/35) |
 | Domain model cleanup | 2 | tool-lib [#31](https://github.com/lstbob/tsqr-tool-lib/issues/31) |
 
 ### Sprint 4 (Aug 21–Sep 3)
 | Item | SP | Repo |
 |------|----|------|
-| 3a — Clean persistence abstractions + folder structure | 5 | tool-lib [#36](https://github.com/lstbob/tsqr-tool-lib/issues/36) |
+| Clean persistence abstractions + folder structure | 5 | tool-lib [#36](https://github.com/lstbob/tsqr-tool-lib/issues/36) |
 
 ### Sprint 5 (Sep 4–17)
 | Item | SP | Repo |
 |------|----|------|
-| 3b — Add optimistic concurrency control | 5 | tool-lib [#37](https://github.com/lstbob/tsqr-tool-lib/issues/37) |
+| Optimistic concurrency control | 5 | tool-lib [#37](https://github.com/lstbob/tsqr-tool-lib/issues/37) |
 
 ### Sprint 6 (Sep 18–Oct 1)
 | Item | SP | Repo |
 |------|----|------|
-| 3c — Add affected row count checks | 3 | tool-lib [#38](https://github.com/lstbob/tsqr-tool-lib/issues/38) |
+| Affected row count checks | 3 | tool-lib [#38](https://github.com/lstbob/tsqr-tool-lib/issues/38) |
 | Domain model improvements (slug + agg roots) | 2 | communities [#2](https://github.com/lstbob/tsqr-communities/issues/2) |
 
 ### Sprint 7 (Oct 2–15)
 | Item | SP | Repo |
 |------|----|------|
-| 4a — Fix QuickRegister txn + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
+| QuickRegister txn fix + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
 
 ### Sprint 8 (Oct 16–29)
 | Item | SP | Repo |
 |------|----|------|
-| 4b — Inject ISqlUnitOfWork into GeographyQueries/DashboardQueries | 3 | communities [#5](https://github.com/lstbob/tsqr-communities/issues/5) |
+| UoW injection into GeographyQueries/DashboardQueries | 3 | communities [#5](https://github.com/lstbob/tsqr-communities/issues/5) |
 | Schema hardening | 2 | soup-kitchen [#3](https://github.com/lstbob/tsqr-soup-kitchen/issues/3) |
 
 ### Sprint 9 (Oct 30–Nov 12)
@@ -82,12 +82,12 @@ tsqr-sdlc/
 ### Sprint 10 (Nov 13–26)
 | Item | SP | Repo |
 |------|----|------|
-| 7a — Constructor validation + factory methods | 5 | soup-kitchen [#4](https://github.com/lstbob/tsqr-soup-kitchen/issues/4) |
+| Constructor validation + factory methods | 5 | soup-kitchen [#4](https://github.com/lstbob/tsqr-soup-kitchen/issues/4) |
 
 ### Sprint 11 (Nov 27–Dec 10)
 | Item | SP | Repo |
 |------|----|------|
-| 7b — Convert Meal/Guest/Volunteer/Donation to child entities | 3 | soup-kitchen [#5](https://github.com/lstbob/tsqr-soup-kitchen/issues/5) |
+| Convert Meal/Guest/Volunteer/Donation to child entities | 3 | soup-kitchen [#5](https://github.com/lstbob/tsqr-soup-kitchen/issues/5) |
 | Schema hardening | 2 | autheo [#2](https://github.com/lstbob/tsqr-autheo/issues/2) |
 
 ### Sprint 12 (Dec 11–24)
@@ -98,12 +98,12 @@ tsqr-sdlc/
 ### Sprint 13 (Dec 25–Jan 7)
 | Item | SP | Repo |
 |------|----|------|
-| 10a — UserProfile encapsulation + behavior | 5 | identity [#3](https://github.com/lstbob/tsqr-identity/issues/3) |
+| UserProfile encapsulation + behavior | 5 | identity [#3](https://github.com/lstbob/tsqr-identity/issues/3) |
 
 ### Sprint 14 (Jan 8–21)
 | Item | SP | Repo |
 |------|----|------|
-| 10b — Role domain model + handler updates | 3 | identity [#4](https://github.com/lstbob/tsqr-identity/issues/4) |
+| Role domain model + handler updates | 3 | identity [#4](https://github.com/lstbob/tsqr-identity/issues/4) |
 
 ### Sprint 15 (Jan 22–Feb 4)
 | Item | SP | Repo |
@@ -118,12 +118,12 @@ tsqr-sdlc/
 ### Sprint 17 (Feb 19–Mar 4)
 | Item | SP | Repo |
 |------|----|------|
-| 14a — Create Ticket aggregate + state machine | 5 | support [#3](https://github.com/lstbob/tsqr-support/issues/3) |
+| Ticket aggregate + state machine | 5 | support [#3](https://github.com/lstbob/tsqr-support/issues/3) |
 
 ### Sprint 18 (Mar 5–18)
 | Item | SP | Repo |
 |------|----|------|
-| 14b — Create Incident aggregate + event wiring | 3 | support [#4](https://github.com/lstbob/tsqr-support/issues/4) |
+| Incident aggregate + event wiring | 3 | support [#4](https://github.com/lstbob/tsqr-support/issues/4) |
 
 ### Sprint 19 (Mar 19–Apr 1)
 | Item | SP | Repo |
@@ -138,12 +138,12 @@ tsqr-sdlc/
 
 | Parent | Parts | Total SP |
 |--------|-------|----------|
-| [#30](https://github.com/lstbob/tsqr-tool-lib/issues/30) Aggregate boundary & events | [#33](https://github.com/lstbob/tsqr-tool-lib/issues/33) 1a (5), [#34](https://github.com/lstbob/tsqr-tool-lib/issues/34) 1b (5), [#35](https://github.com/lstbob/tsqr-tool-lib/issues/35) 1c (3) | 13 |
-| [#32](https://github.com/lstbob/tsqr-tool-lib/issues/32) Persistence architecture | [#36](https://github.com/lstbob/tsqr-tool-lib/issues/36) 3a (5), [#37](https://github.com/lstbob/tsqr-tool-lib/issues/37) 3b (5), [#38](https://github.com/lstbob/tsqr-tool-lib/issues/38) 3c (3) | 13 |
-| [#1](https://github.com/lstbob/tsqr-communities/issues/1) Transaction & query refactor | [#4](https://github.com/lstbob/tsqr-communities/issues/4) 4a (5), [#5](https://github.com/lstbob/tsqr-communities/issues/5) 4b (3) | 8 |
-| [#1](https://github.com/lstbob/tsqr-soup-kitchen/issues/1) Domain model impl. | [#4](https://github.com/lstbob/tsqr-soup-kitchen/issues/4) 7a (5), [#5](https://github.com/lstbob/tsqr-soup-kitchen/issues/5) 7b (3) | 8 |
-| [#1](https://github.com/lstbob/tsqr-identity/issues/1) Domain model creation | [#3](https://github.com/lstbob/tsqr-identity/issues/3) 10a (5), [#4](https://github.com/lstbob/tsqr-identity/issues/4) 10b (3) | 8 |
-| [#1](https://github.com/lstbob/tsqr-support/issues/1) Domain model creation | [#3](https://github.com/lstbob/tsqr-support/issues/3) 14a (5), [#4](https://github.com/lstbob/tsqr-support/issues/4) 14b (3) | 8 |
+| [#30](https://github.com/lstbob/tsqr-tool-lib/issues/30) Aggregate boundary & events | [#33](https://github.com/lstbob/tsqr-tool-lib/issues/33) Cross-aggregate txns (5), [#34](https://github.com/lstbob/tsqr-tool-lib/issues/34) Event wiring (5), [#35](https://github.com/lstbob/tsqr-tool-lib/issues/35) Policy/FineService (3) | 13 |
+| [#32](https://github.com/lstbob/tsqr-tool-lib/issues/32) Persistence architecture | [#36](https://github.com/lstbob/tsqr-tool-lib/issues/36) Clean abstractions (5), [#37](https://github.com/lstbob/tsqr-tool-lib/issues/37) Concurrency (5), [#38](https://github.com/lstbob/tsqr-tool-lib/issues/38) Row counts (3) | 13 |
+| [#1](https://github.com/lstbob/tsqr-communities/issues/1) Transaction & query refactor | [#4](https://github.com/lstbob/tsqr-communities/issues/4) QuickRegister txn + pagination (5), [#5](https://github.com/lstbob/tsqr-communities/issues/5) UoW injection (3) | 8 |
+| [#1](https://github.com/lstbob/tsqr-soup-kitchen/issues/1) Domain model impl. | [#4](https://github.com/lstbob/tsqr-soup-kitchen/issues/4) Constructor validation (5), [#5](https://github.com/lstbob/tsqr-soup-kitchen/issues/5) Child entities (3) | 8 |
+| [#1](https://github.com/lstbob/tsqr-identity/issues/1) Domain model creation | [#3](https://github.com/lstbob/tsqr-identity/issues/3) UserProfile (5), [#4](https://github.com/lstbob/tsqr-identity/issues/4) Role model (3) | 8 |
+| [#1](https://github.com/lstbob/tsqr-support/issues/1) Domain model creation | [#3](https://github.com/lstbob/tsqr-support/issues/3) Ticket aggregate (5), [#4](https://github.com/lstbob/tsqr-support/issues/4) Incident aggregate (3) | 8 |
 
 ---
 
