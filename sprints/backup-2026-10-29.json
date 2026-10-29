@@ -1,0 +1,1724 @@
+{
+  "exportedAt": "2026-10-29T20:08:50.121694+00:00",
+  "project": {
+    "id": "PVT_kwHODNbEK84A7AFT",
+    "number": 4,
+    "owner": "lstbob",
+    "title": "tsqr"
+  },
+  "field": {
+    "id": "PVTIF_lAHODNbEK84A7AFTzg29qs4",
+    "name": "bob-sprint",
+    "configuration": {
+      "iterations": [
+        {
+          "id": "9991772e",
+          "title": "Sprint 8",
+          "startDate": "2026-10-16",
+          "duration": 14
+        },
+        {
+          "id": "27cea95a",
+          "title": "Sprint 9",
+          "startDate": "2026-10-30",
+          "duration": 14
+        },
+        {
+          "id": "22af0a57",
+          "title": "Sprint 10",
+          "startDate": "2026-11-13",
+          "duration": 14
+        },
+        {
+          "id": "e1d8c409",
+          "title": "Sprint 11",
+          "startDate": "2026-11-27",
+          "duration": 14
+        },
+        {
+          "id": "ac805860",
+          "title": "Sprint 12",
+          "startDate": "2026-12-11",
+          "duration": 14
+        },
+        {
+          "id": "b14ffede",
+          "title": "Sprint 13",
+          "startDate": "2026-12-25",
+          "duration": 14
+        },
+        {
+          "id": "ec87525b",
+          "title": "Sprint 14",
+          "startDate": "2027-01-08",
+          "duration": 14
+        },
+        {
+          "id": "8e18e550",
+          "title": "Sprint 15",
+          "startDate": "2027-01-22",
+          "duration": 14
+        },
+        {
+          "id": "a350a0d6",
+          "title": "Sprint 16",
+          "startDate": "2027-02-05",
+          "duration": 14
+        },
+        {
+          "id": "00923610",
+          "title": "Sprint 17",
+          "startDate": "2027-02-19",
+          "duration": 14
+        },
+        {
+          "id": "9b1885dc",
+          "title": "Sprint 18",
+          "startDate": "2027-03-05",
+          "duration": 14
+        },
+        {
+          "id": "f8517d3d",
+          "title": "Sprint 19",
+          "startDate": "2027-03-19",
+          "duration": 14
+        }
+      ],
+      "completedIterations": [
+        {
+          "id": "efc2d425",
+          "title": "Sprint 7",
+          "startDate": "2026-10-02",
+          "duration": 14
+        },
+        {
+          "id": "62a037e8",
+          "title": "Sprint 6",
+          "startDate": "2026-09-18",
+          "duration": 14
+        },
+        {
+          "id": "1673aaa1",
+          "title": "Sprint 5",
+          "startDate": "2026-09-04",
+          "duration": 14
+        },
+        {
+          "id": "b42e749f",
+          "title": "Sprint 4",
+          "startDate": "2026-08-21",
+          "duration": 14
+        },
+        {
+          "id": "29213833",
+          "title": "Sprint 3",
+          "startDate": "2026-08-07",
+          "duration": 14
+        },
+        {
+          "id": "8d41fadf",
+          "title": "Sprint 2",
+          "startDate": "2026-07-24",
+          "duration": 14
+        },
+        {
+          "id": "54209e0e",
+          "title": "Sprint 1",
+          "startDate": "2026-07-10",
+          "duration": 14
+        }
+      ]
+    }
+  },
+  "items": {
+    "items": [
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "29213833",
+          "startDate": "2026-08-07",
+          "title": "Sprint 3"
+        },
+        "content": {
+          "body": "",
+          "number": 1,
+          "repository": "lstbob/tsqr-domain",
+          "title": "Fixing AI slop",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-domain/issues/1"
+        },
+        "id": "PVTI_lAHODNbEK84A7AFTzgzXBZI",
+        "repository": "https://github.com/lstbob/tsqr-domain",
+        "status": "In progress",
+        "title": "Fixing AI slop"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "8d41fadf",
+          "startDate": "2026-07-24",
+          "title": "Sprint 2"
+        },
+        "content": {
+          "body": "## Problem\n\nSeveral command handlers in Tool Library violate aggregate boundary rules and domain wiring is incomplete.\n\n### Cross-aggregate transactions (3 handlers)\n- **RegisterToolCommandHandler** \u2014 creates both `Tool` and `InventoryItem` in one transaction\n- **LoanToolCommandHandler** \u2014 mutates `Loan` + `InventoryItem` in one transaction\n- **ReserveToolCommandHandler** \u2014 mutates `Reservation` + `InventoryItem` in one transaction\n\nProper DDD: one transaction per aggregate. Side effects should happen through domain event handlers. Additionally, `InventoryItem.cs:46-47` has `ReservationDate`/`ReservationMemberId` \u2014 duplicated reservation state that creates a dual-write risk.\n\n### Domain events defined but never raised\n- `PickupReminderEvent`, `ReturnReminderEvent`, `ToolReservedEvent` \u2014 defined as record types, never called\n- 4 handlers are empty stubs: `ToolMarkedForRepairNotificationHandler`, `NextInLineNotificationHandler`, `PickupReminderHandler`, `ReturnReminderHandler`\n\n### ReservationQueueService unwired\n`ReservationQueueService.ShiftQueueAfterCancellation()` exists in domain but never called. When a reservation is cancelled, `QueuePosition` values are not renumbered.\n\n### Policy aggregate and FineService ignored\n- `Loan.EndLoan()` hardcodes `$1/day` instead of calling `FineService` or reading `Policy.LateFeePerDay`\n- `Policy.MaxLoanDurationDays` not checked by `LoanToolCommandHandler`\n- `Policy.MaxRenewalCount` unused \u2014 no `Loan.Renew()` method exists\n- `Policy.MaxLoanReservationDays` not checked by `ReserveToolCommandHandler`\n\n## Suggested Approach\n1. Refactor RegisterTool/LoanTool/ReserveTool handlers to act on one aggregate, emit domain events for side effects\n2. Wire domain event raises in the aggregate behavioral methods\n3. Implement the 4 empty event handlers\n4. Call `ReservationQueueService.ShiftQueueAfterCancellation()` from `ReservationCancelledEventHandler`\n5. Load and enforce `Policy` in the relevant command handlers; use `FineService` instead of hardcoded `$1/day`\n\n## Affected Files\n- `Loan.cs:121-125`, `RegisterToolCommandHandler.cs`, `LoanToolCommandHandler.cs`, `ReserveToolCommandHandler.cs`\n- `ReservationQueueService.cs`, multiple event handler stubs, `Policy.cs`, `FineService.cs`\n\n**Sources:**\n- [Section #1 - Aggregate Boundary Violations](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#1-aggregate-boundary-violations)\n- [Section #2 - Domain Events: Defined but Dead](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#2-domain-events-defined-but-dead)\n- [Section #9 - Reservation Queue Ignores Its Own Domain Service](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#9-reservation-queue-ignores-its-own-domain-service)\n- [Section #11 - Hardcoded Fine Rate](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#11-hardcoded-fine-rate-despite-having-a-policy-aggregate)\n- [Section #12 - Policy Entity Is Orphaned](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#12-policy-entity-is-orphaned)\n",
+          "number": 30,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Aggregate boundary, events, and domain service wiring",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/30"
+        },
+        "estimate(SP)": 13,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb41U",
+        "labels": [
+          "enhancement",
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "XL",
+        "status": "Backlog",
+        "title": "[Tech] Aggregate boundary, events, and domain service wiring"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "29213833",
+          "startDate": "2026-08-07",
+          "title": "Sprint 3"
+        },
+        "content": {
+          "body": "## Problem\n\nThree small but impactful issues in the domain layer.\n\n### Debug method leaked into production\n`Entity.cs:56-59` (the domain base class inherited by every aggregate) contains a misspelled test method:\n```csharp\npublic Task<int> TestAsnc()\n{\n    return Task.FromResult(3);\n}\n```\nEvery entity in the system inherits this method \u2014 it pollutes the domain API and serves no purpose.\n\n### Wrong aggregate root markers\n`Manufacturer` is embedded within the `Tool` aggregate (referenced by `Tool.Manufacturer`) but has its own repository `IRepository<Manufacturer, ManufacturerId>`. It has no independent lifecycle outside of being referenced by a `Tool`. Should be a value object or child entity within the `Tool` aggregate.\n\n### Contradictory state transitions\n`Member.Reinstate()` in `Member.cs:213-219` allows `Banned \u2192 Active` directly:\n```csharp\nif (Status != MemberStatus.Suspended && Status != MemberStatus.Banned)\n    return new DomainError(...);\nStatus = MemberStatus.Active;\n```\nBanned should be a terminal state \u2014 reinstating banned members contradicts the original domain analysis.\n\n## Suggested Approach\n1. Remove `TestAsnc()` from `Entity.cs`\n2. Convert `Manufacturer` to a value object or child entity of `Tool`; remove its repository\n3. Add `Banned` to the guard clause in `Member.Reinstate()` to reject reinstatement from banned status\n\n## Affected Files\n- `Entity.cs:56-59`\n- `Manufacturer.cs`, `IRepository<Manufacturer, ManufacturerId>` registration\n- `Member.cs:213-219`\n\n**Sources:**\n- [Section #4 - Debug Leak in Production Code](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#4-debug-leak-in-production-code)\n- [Section #5 - The Not-Aggregate Roots](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#5-the-not-aggregate-roots)\n- [Section #10 - Slug Generation is Naive](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#10-slug-generation-is-naive)\n- [Section #13 - Reinstate Allows Banned \u2192 Active](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#13-supported-but-not-banned-reinstate-allows-banned--active)\n- [Section #15 - Value Object Duplication](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#15-value-object-duplication-across-contexts)\n",
+          "number": 31,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Domain model cleanup",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/31"
+        },
+        "estimate(SP)": 2,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb43g",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "S",
+        "status": "Backlog",
+        "title": "[Tech] Domain model cleanup"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "8d41fadf",
+          "startDate": "2026-07-24",
+          "title": "Sprint 2"
+        },
+        "content": {
+          "body": "## Problem\n\nFour related issues in the persistence infrastructure.\n\n### No pure abstraction for persistence\n`IRepository<TAggregateRoot, TId>` is technology-agnostic, but `SqlRepository<TEntity, TId>` uses `dynamic` to extract `.Value` from ID value objects (assumes int), and `ISqlEntityMapping<TEntity>` assumes SQL. Switching to a document store would require rewriting the entire persistence stack.\n\n### No INoSqlRepository contract\nThere is no `IDocumentRepository<T>` or `INoSqlRepository<TAggregateRoot>` for non-relational stores. Every new repository must conform to the same SQL-tainted interface.\n\n### No folder structure for persistence backends\nAll persistence code lives under `Infrastructure/Dapper/`. Adding MongoDB would have no established pattern.\n\n### Ignored affected row counts\n`SqlRepository.Update()` and `Delete()` ignore the return value of `db.Execute()`. If an UPDATE or DELETE affects zero rows, the application has no way to detect it. `DapperUnitOfWork.SaveChangesAsync()` will still succeed.\n\n## Suggested Approach\n1. Define a clean `IDocumentRepository<T>` or `IDbRepository<T, TId>` family of interfaces in the domain layer\n2. Add `Infrastructure/Persistence/Dapper/` and `Infrastructure/Persistence/DocumentDb/` folder convention\n3. Make `Update`/`Delete` return or check affected rows; throw `ConcurrencyException` when zero rows affected\n4. Add optimistic concurrency control (PostgreSQL `xmin` or explicit `RowVersion`)\n\n## Affected Files\n- `SqlRepository.cs`, `ISqlEntityMapping.cs`, `IRepository.cs`\n- `Infrastructure/Dapper/` folder structure\n- All repository implementations that call `db.Execute()`\n\n**Sources:**\n- [Section #16 - No INoSqlRepository Contract](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#16-no-inosqlrepository-contract-for-non-relational-stores)\n- [Section #17 - No Folder Structure Separation](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#17-no-folder-structure-separation-for-persistence-technologies)\n- [Section #18 - No Pure Abstraction for Persistence](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#18-no-pure-abstraction-for-persistence)\n- [Section #23 - No Optimistic Concurrency Control](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#23-no-optimistic-concurrency-control)\n- [Section #24 - Ignored Affected Row Counts](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#24-ignored-affected-row-counts-from-writes)\n",
+          "number": 32,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Persistence architecture and concurrency safety",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/32"
+        },
+        "estimate(SP)": 13,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb43w",
+        "labels": [
+          "enhancement",
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "XL",
+        "status": "Backlog",
+        "title": "[Tech] Persistence architecture and concurrency safety"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "22af0a57",
+          "startDate": "2026-11-13",
+          "title": "Sprint 10"
+        },
+        "content": {
+          "body": "## Problem\n\nThree related issues in transaction and connection discipline.\n\n### QuickRegister broken transaction boundary\n`QuickRegisterCommunityCommand.cs` calls `SaveChangesAsync()` after each entity creation:\n```csharp\nawait countryRepo.UnitOfWork.SaveChangesAsync(ct);\nawait cityRepo.UnitOfWork.SaveChangesAsync(ct);\nawait neighbourhoodRepo.UnitOfWork.SaveChangesAsync(ct);\nawait communityRepo.UnitOfWork.SaveChangesAsync(ct);\n```\nThe first call commits the transaction. If community creation fails after country/city are saved, those records are orphaned.\n\n### GeographyQueries and DashboardQueries bypass UoW\n`GeographyQueries(connectionString)` creates independent `NpgsqlConnection` per call instead of using the scoped `ISqlUnitOfWork` from DI. These bypass the ambient transaction, breaking read-your-writes consistency.\n\n### No pagination on any list query\n`ToolRepository.GetAllAsync()`, `GeographyQueries`, and all list queries return unbounded result sets. Tool Library's `GetAllAsync` has an N+1 pattern via JOIN + per-row scarcity loading.\n\n## Suggested Approach\n1. Wrap QuickRegister in a single transaction with one commit at the end\n2. Inject `ISqlUnitOfWork` into GeographyQueries and DashboardQueries instead of `connectionString`\n3. Add `LIMIT/OFFSET` pagination to all list queries, starting with ToolRepository.GetAllAsync\n\n## Affected Files\n- `QuickRegisterCommunityCommand.cs`\n- `GeographyQueries.cs`, `DashboardQueries.cs`\n- `ToolRepository.cs:7`, `GeographyQueries.cs` list methods\n\n**Sources:**\n- [Section #6 - Communities: Broken Transactional Boundary in QuickRegister](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#6-communities-broken-transactional-boundary-in-quickregister)\n- [Section #26 - Separate Connections Bypassing the Scoped Unit of Work](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#26-separate-connections-bypassing-the-scoped-unit-of-work)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Transaction boundary and query layer refactor",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/1"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb44Q",
+        "labels": [
+          "enhancement",
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Transaction boundary and query layer refactor"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "62a037e8",
+          "startDate": "2026-09-18",
+          "title": "Sprint 6"
+        },
+        "content": {
+          "body": "## Problem\n\nTwo domain-level issues.\n\n### Naive slug generation\n`Community.cs:41-42` generates slugs with:\n```csharp\nname.ToLowerInvariant().Replace(' ', '-').Replace(\"--\", \"-\");\n```\nFails on: special characters, consecutive hyphens beyond two, leading/trailing hyphens, non-ASCII characters, and **no uniqueness enforcement** \u2014 two communities can have the same slug, breaking URL routing.\n\n### Wrong aggregate root markers\n`Country`, `City`, `Neighbourhood` are tagged as `IAggregateRoot` but are reference/lookup data \u2014 created once, rarely mutated. Making each an independent aggregate root forces `QuickRegisterCommunityCommand` to commit after each creation. Should be value objects or a single `Location` aggregate.\n\n## Suggested Approach\n1. Replace slug generation with a robust utility (e.g., `System.Text.RegularExpressions` to strip non-alphanumeric chars, collapse hyphens, trim edges; add DB unique constraint)\n2. Convert `Country`/`City`/`Neighbourhood` to value objects or child entities under a `Location` aggregate; remove their individual repositories\n\n## Affected Files\n- `Community.cs:41-42`\n- `Country.cs`, `City.cs`, `Neighbourhood.cs` and their `IRepository` interfaces\n\n**Sources:**\n- [Section #10 - Slug Generation is Naive](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#10-slug-generation-is-naive)\n- [Section #15 - Value Object Duplication](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#15-value-object-duplication-across-contexts)\n",
+          "number": 2,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Domain model improvements",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/2"
+        },
+        "estimate(SP)": 2,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb44k",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "size": "S",
+        "status": "Backlog",
+        "title": "[Tech] Domain model improvements"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "27cea95a",
+          "startDate": "2026-10-30",
+          "title": "Sprint 9"
+        },
+        "content": {
+          "body": "## Problem\n\nCross-cutting database safety improvements for tsqr-communities.\n\n### Schema design gaps\n- `SELECT *` in every GetById mapping \u2014 fragile when columns change, wasteful fetching unused columns\n- No `CHECK` constraints on INTEGER-encoded enum columns (Status, Type, Category stored as plain INTEGER \u2014 value `99` accepted silently)\n- No indexes on critical query paths (only implicit PK index on `Id`)\n\n### No optimistic concurrency control\nNo row version column (`xmin` or explicit `RowVersion`). No UPDATE/DELETE uses `WHERE` to verify row hasn't changed since read. Lost updates possible.\n\n### Ignored affected row counts\n`db.Execute()` return value ignored \u2014 zero-row updates silently succeed.\n\n### Hard deletes without audit trail\nAll DELETEs are hard. No `DeletedAt`/`DeletedBy` columns. No recovery or audit trail possible. Deleting a member breaks FK references from their past loans, inventory, and maintenance records.\n\n## Suggested Approach\n1. Replace SELECT * with explicit column lists; add CHECK constraints; add indexes on FK columns and frequently queried columns\n2. Add row version checks (xmin or explicit RowVersion column)\n3. Check `db.Execute()` return value; throw on zero rows\n4. Add `DeletedAt TIMESTAMP NULL` and `DeletedBy VARCHAR(200)` columns; replace DELETE with soft-delete UPDATE\n\n## Affected Files\n- All mapping files (e.g., `CommunityMapping.cs`, `CountryMapping.cs`)\n- All SQL init scripts\n- All repository `Update`/`Delete` methods\n\n**Sources:**\n- [Section #19 - Schema Design: SELECT *, Missing Constraints, No Indexes](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#19-schema-design-select--missing-constraints-no-indexes)\n- [Section #25 - Hard Deletes Without Audit Trail](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#25-hard-deletes-without-audit-trail)\n",
+          "number": 3,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Schema hardening",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/3"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb444",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Schema hardening"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "22af0a57",
+          "startDate": "2026-11-13",
+          "title": "Sprint 10"
+        },
+        "content": {
+          "body": "## Problem\n\nThe Soup Kitchen domain layer provides zero protection against invalid state.\n\n### Public constructors with zero validation\nEvery aggregate uses public constructors with no guards:\n```csharp\npublic Event(string name, string description, DateTime eventDate, string location,\n    int? maxGuests, int communityId) : base(new EventId(0))\n{\n    Name = name;            // can be null/empty\n    Description = description; // can be null/empty\n    EventDate = eventDate;  // can be DateTime.MinValue or in the past\n    Location = location;    // can be null/empty\n    Status = EventStatus.Planned;\n    MaxGuests = maxGuests;  // can be 0 or negative\n}\n```\nSame pattern in `Guest`, `Meal`, `Volunteer`, `Donation`.\n\n### Wrong aggregate root markers\n`Meal`, `Guest`, `Volunteer`, `Donation` are independent aggregates referencing an `Event` by `EventId`. A Meal has no existence without an Event \u2014 they should be child entities of `Event`. Current design allows creating meals for non-existent events.\n\n## Suggested Approach\n1. Make constructors internal, add named factory methods with validation (e.g., `Event.Create(name, ...)` returning `Result<Event>`)\n2. Add guard clauses for null/empty strings, past dates, negative values, zero max guests\n3. Convert Meal/Guest/Volunteer/Donation to child entities within the `Event` aggregate; remove their individual repositories; access them through `Event`\n\n## Affected Files\n- `Event.cs`, `Guest.cs`, `Meal.cs`, `Volunteer.cs`, `Donation.cs` (constructors)\n- Individual repository interfaces and implementations for Meal/Guest/Volunteer/Donation\n\n**Source:**\n- [Section #7 - Soup Kitchen: Public Constructors, Zero Validation](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#7-soup-kitchen-public-constructors-zero-validation)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Domain model implementation",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/1"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb45g",
+        "labels": [
+          "enhancement",
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Domain model implementation"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ac805860",
+          "startDate": "2026-12-11",
+          "title": "Sprint 12"
+        },
+        "content": {
+          "body": "## Problem\n\nThe Soup Kitchen WebApi query handlers have security and performance issues.\n\n### String concatenation for dynamic WHERE clauses\nPresent in `GetMealsQuery.cs`, `GetVolunteersQuery.cs`, `GetEventsQuery.cs`, `GetGuestsQuery.cs`, `GetDonationsQuery.cs`:\n```csharp\nvar conditions = new List<string>();\nif (request.EventId.HasValue) conditions.Add(\"m.EventId = @EventId\");\nvar where = conditions.Count > 0 ? \"WHERE \" + string.Join(\" AND \", conditions) : \"\";\nvar sql = $\"SELECT ... FROM Meals m {where} ORDER BY ...\";\n```\nWhile values are parameterized, the WHERE string itself is concatenated. A missing space or future contributor adding user input to the string part creates a SQL injection vector. Fragile: a missing space before WHERE or between conditions produces invalid SQL.\n\n### No pagination\nAll list queries return unbounded result sets. No `LIMIT/OFFSET` on any query except `SupportQueries.ListTicketsAsync`.\n\n### Queries bypass scoped UoW\nAll 6 WebApi query handlers create independent `NpgsqlConnection` per call instead of using the scoped `ISqlUnitOfWork` from DI. Each connection involves TCP handshake + SSL + auth. Dashboard pages calling multiple queries waste 5+ TCP connections per request.\n\n## Suggested Approach\n1. Extract filter building into a shared helper returning a tuple `(where, parameters)` used for both COUNT and data queries; use `DynamicParameters`\n2. Add `LIMIT @PageSize OFFSET @Offset` to all list queries\n3. Inject `ISqlUnitOfWork` into all query handlers instead of `connectionString`\n\n## Affected Files\n- `GetMealsQuery.cs`, `GetVolunteersQuery.cs`, `GetEventsQuery.cs`, `GetGuestsQuery.cs`, `GetDonationsQuery.cs`\n- `DashboardQueries.cs`, `Program.cs` (DI registration)\n\n**Sources:**\n- [Section #21 - No Pagination on Any List Query](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#21-no-pagination-on-any-list-query)\n- [Section #22 - String Concatenation for Dynamic WHERE Clauses](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#22-string-concatenation-for-dynamic-where-clauses)\n- [Section #26 - Separate Connections Bypassing the Scoped Unit of Work](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#26-separate-connections-bypassing-the-scoped-unit-of-work)\n- [Section #27 - Unnecessary TCP Connections for Read Queries](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#27-unnecessary-tcp-connections-for-read-queries)\n",
+          "number": 2,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Query layer refactor",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/2"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb46U",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Query layer refactor"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9991772e",
+          "startDate": "2026-10-16",
+          "title": "Sprint 8"
+        },
+        "content": {
+          "body": "## Problem\n\nCross-cutting database safety improvements for tsqr-soup-kitchen.\n\n### Schema design gaps\n- SELECT * in every GetById mapping\n- No CHECK constraints on INTEGER-encoded enum columns (Status, Category stored as plain INTEGER)\n- No indexes on FK columns (EventId in Guests/Meals/Volunteers/Donations)\n\n### No optimistic concurrency control\nNo row version column. Lost updates possible \u2014 two concurrent writes can silently overwrite each other.\n\n### Ignored affected row counts\ndb.Execute() return value ignored on all writes.\n\n### Hard deletes without audit trail\nNo DeletedAt/DeletedBy columns. Deleting an Event cascades FK issues to dependent rows.\n\n## Suggested Approach\n1. Replace SELECT * with explicit column lists; add CHECK constraints; add FK indexes\n2. Add row version checks (xmin or explicit RowVersion column)\n3. Check db.Execute() return value; throw on zero rows\n4. Add DeletedAt/DeletedBy columns; replace DELETE with soft-delete UPDATE\n\n## Affected Files\n- All mapping files (EventMapping.cs, GuestMapping.cs, MealMapping.cs, VolunteerMapping.cs, DonationMapping.cs)\n- All SQL init scripts\n- All repository Update/Delete methods\n\n**Sources:**\n- [Section #19 - Schema Design: SELECT *, Missing Constraints, No Indexes](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#19-schema-design-select--missing-constraints-no-indexes)\n- [Section #25 - Hard Deletes Without Audit Trail](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#25-hard-deletes-without-audit-trail)\n",
+          "number": 3,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Schema hardening",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/3"
+        },
+        "estimate(SP)": 2,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb47A",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "size": "S",
+        "status": "Backlog",
+        "title": "[Tech] Schema hardening"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "22af0a57",
+          "startDate": "2026-11-13",
+          "title": "Sprint 10"
+        },
+        "content": {
+          "body": "## Problem\n\nThe Identity domain layer is effectively a DTO namespace with zero encapsulation.\n\n### Completely anemic domain\n`UserProfile` is a plain data class with public get/set properties:\n```csharp\npublic sealed class UserProfile\n{\n    public string Id { get; set; } = string.Empty;   // anyone can change the ID\n    public string? FirstName { get; set; }            // can be set to anything\n    public string? LastName { get; set; }\n    public string? AvatarUrl { get; set; }\n    public string? Bio { get; set; }\n    public DateTime CreatedAt { get; set; }           // mutable \u2014 can be rewritten\n    public DateTime UpdatedAt { get; set; }\n    public DateTime? LockoutEnd { get; set; }\n}\n```\nNo encapsulation, no domain behavior, no invariants. `Role` has the same pattern.\n\nThe domain layer (`TSQR.Identity.Domain`) contains:\n- No `IAggregateRoot` marker on any entity\n- No `Entity` base class\n- No domain events\n- No value objects\n- No `Result<T>` validation\n\nIt is functionally a DTO namespace.\n\n## Suggested Approach\n1. Add `IAggregateRoot` to `UserProfile`, make all property setters `private set`\n2. Add named factory methods with validation (e.g., `UserProfile.Create(firstName, lastName)` returning `Result<UserProfile>`)\n3. Add domain behavior methods (`SetLockoutEnd()`, `UpdateProfile()`) with guard clauses\n4. Add `Entity` base class, domain events collection, value objects where appropriate\n5. Update application handlers to call domain methods instead of setting properties directly\n\n## Affected Files\n- `UserProfile.cs`, `Role.cs` in `TSQR.Identity.Domain`\n- All application handlers that set UserProfile properties directly\n- `ProfileRepository.cs`, `UserAdminRepository.cs`\n\n**Source:**\n- [Section #8 - Identity: Completely Anemic Domain](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#8-identity-completely-anemic-domain)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Domain model creation",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/1"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb47s",
+        "labels": [
+          "enhancement",
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Domain model creation"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "8e18e550",
+          "startDate": "2027-01-22",
+          "title": "Sprint 15"
+        },
+        "content": {
+          "body": "## Problem\n\nThree related schema-level issues.\n\n### Identity schema duplication and type mismatch\ntsqr-identity has two mutually exclusive database schemas:\n- `init.sql` and `001_InitialSchema.sql` define `AspNetUsers`, `AspNetRoles` etc. \u2014 **dead code**, never queried by any repository\n- `05-identity.sql` (from tsqr-deploy) defines `user_profiles`, `roles` \u2014 **what code actually uses**\n\nType mismatch: `user_profiles.Id` is `VARCHAR(128)` while `tsqr-autheo`'s `Users.Id` is `UUID`. Both hold the same GUID. Prevents FK references, direct JOINs, and database-level type safety.\n\n### Schema design gaps\n- SELECT * in every GetById mapping\n- No CHECK constraints on INTEGER-encoded enum columns\n- Minimal indexing (only `IX_user_roles_RoleId` and `IX_pending_email_changes_UserId`/`TokenHash`)\n\n### Hard deletes without audit trail\nAll DELETEs are hard. No recovery possible.\n\n## Suggested Approach\n1. Remove dead `init.sql` and `001_InitialSchema.sql` files\n2. Change `user_profiles.Id` from `VARCHAR(128)` to `UUID`\n3. Add CHECK constraints, explicit column lists, and indexes on FK/lookup columns\n4. Add `DeletedAt`/`DeletedBy` columns; replace DELETE with soft-delete UPDATE\n\n## Affected Files\n- `src/.../Api/docker/init.sql`\n- `src/.../Infrastructure/Migrations/001_InitialSchema.sql`\n- `../../tsqr-deploy/infra/05-identity.sql`\n- All mapping files, all repository Update/Delete methods\n\n**Sources:**\n- [Section #19 - Schema Design: SELECT *, Missing Constraints, No Indexes](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#19-schema-design-select--missing-constraints-no-indexes)\n- [Section #20 - Identity Schema Duplication and Type Mismatch](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#20-identity-schema-duplication-and-type-mismatch)\n- [Section #25 - Hard Deletes Without Audit Trail](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#25-hard-deletes-without-audit-trail)\n",
+          "number": 2,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Schema consolidation and hardening",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/2"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb48Y",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Schema consolidation and hardening"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "## Problem\n\nTwo runtime-affecting issues in Autheo.\n\n### Inconsistent error handling strategy\nAutheo uses a mixed approach: domain methods throw exceptions while application handlers return `Result<T>`:\n- `User.Create()` throws `ArgumentException` when email is empty\n- `RefreshToken.Rotate()` throws `InvalidOperationException` if token is inactive\n- `PasswordResetToken.Verify()` throws on expiration\n\nApplication handlers use `Result<T>`, so these exceptions crash the request instead of returning a `ValidationError` to the client. This is the most dangerous error pattern in the codebase \u2014 a validation failure in `User.Create()` will return a 500 error to the client.\n\n### Blocking async call in UserRepository\n`UserRepository.Update()` uses `.GetAwaiter().GetResult()` \u2014 blocking the ASP.NET request thread:\n```csharp\npublic void Update(User user)\n{\n    uow.Connection.ExecuteAsync(...).GetAwaiter().GetResult();\n}\n```\nUnder load this causes thread pool starvation \u2014 all threads blocked on I/O, new requests queue up, throughput collapses.\n\n## Suggested Approach\n1. Convert domain methods to return `Result<T>` instead of throwing; update callers to check `IsFailure`\n2. Remove `.GetAwaiter().GetResult()` \u2014 either make `IRepository.Update` async (`Task UpdateAsync`) or use synchronous `db.Execute()`\n\n## Affected Files\n- `User.cs` (Create, etc.), `RefreshToken.cs` (Rotate), `PasswordResetToken.cs` (Verify)\n- `UserRepository.cs:44-66`\n- `IRepository.cs` interface definition\n\n**Sources:**\n- [Section #3 - Inconsistent Error Handling Strategy](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#3-inconsistent-error-handling-strategy)\n- [Section #28 - Blocking Async Call in Autheo's UserRepository](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#28-blocking-async-call-in-autheos-userrepository)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-autheo",
+          "title": "[Tech] Error handling and async patterns",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-autheo/issues/1"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb49I",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-autheo",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Error handling and async patterns"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "e1d8c409",
+          "startDate": "2026-11-27",
+          "title": "Sprint 11"
+        },
+        "content": {
+          "body": "## Problem\n\nCross-cutting database safety improvements for tsqr-autheo.\n\n### Schema design gaps\n- SELECT * in GetById mappings (if applicable)\n- No CHECK constraints on INTEGER-encoded enum columns\n- No indexes beyond PK on frequently queried columns\n\n### No optimistic concurrency control\nNo row version column. Lost updates possible.\n\n### Ignored affected row counts\ndb.Execute() return value ignored.\n\n### Hard deletes without audit trail\nNo DeletedAt/DeletedBy columns.\n\n## Suggested Approach\n1. Replace SELECT * with explicit column lists; add CHECK constraints; add indexes\n2. Add row version checks (xmin or explicit RowVersion column)\n3. Check db.Execute() return value; throw on zero rows\n4. Add DeletedAt/DeletedBy columns; replace DELETE with soft-delete UPDATE\n\n## Affected Files\n- All mapping files\n- All SQL init scripts\n- All repository Update/Delete methods\n\n**Sources:**\n- [Section #19 - Schema Design: SELECT *, Missing Constraints, No Indexes](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#19-schema-design-select--missing-constraints-no-indexes)\n- [Section #25 - Hard Deletes Without Audit Trail](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#25-hard-deletes-without-audit-trail)\n",
+          "number": 2,
+          "repository": "lstbob/tsqr-autheo",
+          "title": "[Tech] Schema hardening",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-autheo/issues/2"
+        },
+        "estimate(SP)": 2,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb4-I",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-autheo",
+        "size": "S",
+        "status": "Backlog",
+        "title": "[Tech] Schema hardening"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "22af0a57",
+          "startDate": "2026-11-13",
+          "title": "Sprint 10"
+        },
+        "content": {
+          "body": "## Problem\n\nThe Support context has no domain model whatsoever.\n\n### No domain aggregates\n- `ITicketsRepository` takes primitive parameters: `CreateTicketAsync(string subject, int category, string description, ...)`\n- `ISupportQueries` returns flat DTO records (`TicketListItemRow`, `TicketDetailRow`, etc.)\n- The closest thing to a domain model is `Enums.cs` (5 enums with label extensions)\n- No `Entity` base class, no `IAggregateRoot` marker, no value objects, no domain events\n\nThere is no `Ticket` aggregate, no `Incident` aggregate. Business rules like \"a resolved ticket cannot be reopened\" or \"an incident must transition from Investigating to Ongoing to Resolved\" are not enforced anywhere.\n\n## Suggested Approach\n1. Define a `Ticket` aggregate with: Id, Subject, Description, Category, Priority, Status (with valid state machine transitions), SubmitterEmail, CreatedAt, UpdatedAt, and domain events for state changes\n2. Define an `Incident` aggregate with investigation lifecycle and state machine\n3. Add named factory methods with validation and `private set` encapsulation\n4. Add `IRepository<Ticket, TicketId>` and migrate `ITicketsRepository` to use the aggregate\n5. Add domain events for ticket created, resolved, reopened, etc.\n\n## Affected Files\n- All files in `TSQR.Support.Domain/`\n- `ITicketsRepository.cs`, `ISupportQueries.cs`\n- All application handlers that work with raw primitives\n\n**Source:**\n- [Section #14 - Support Context Has No Domain Model](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#14-support-context-has-no-domain-model)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-support",
+          "title": "[Tech] Domain model creation",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-support/issues/1"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb4-0",
+        "labels": [
+          "enhancement",
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-support",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Domain model creation"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Problem\n\nCross-cutting database and query safety improvements for tsqr-support.\n\n### Schema design gaps\n- SELECT * in mappings\n- No CHECK constraints on INTEGER-encoded enum columns (Category, Status, State)\n- No indexes on FK/lookup columns\n\n### No pagination on list queries\nOnly `SupportQueries.ListTicketsAsync` has a `LIMIT 50` \u2014 but all other list queries are unbounded. Support tickets can grow without bound over time.\n\n### No optimistic concurrency control\nNo row version column. Lost updates possible.\n\n### Ignored affected row counts\ndb.Execute() return value ignored on all writes.\n\n### Hard deletes without audit trail\nNo DeletedAt/DeletedBy columns.\n\n## Suggested Approach\n1. Replace SELECT * with explicit column lists; add CHECK constraints; add indexes\n2. Add LIMIT/OFFSET to all list queries (parameterized with page/pageSize defaults)\n3. Add row version checks (xmin or explicit RowVersion column)\n4. Check db.Execute() return value; throw on zero rows\n5. Add DeletedAt/DeletedBy columns; replace DELETE with soft-delete UPDATE\n\n## Affected Files\n- All mapping files\n- All SQL init scripts\n- All repository Update/Delete methods\n- SupportQueries.cs list query methods\n\n**Sources:**\n- [Section #19 - Schema Design: SELECT *, Missing Constraints, No Indexes](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#19-schema-design-select--missing-constraints-no-indexes)\n- [Section #25 - Hard Deletes Without Audit Trail](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#25-hard-deletes-without-audit-trail)\n",
+          "number": 2,
+          "repository": "lstbob/tsqr-support",
+          "title": "[Tech] Schema and query hardening",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-support/issues/2"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyb4_k",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-support",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Schema and query hardening"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "b42e749f",
+          "startDate": "2026-08-21",
+          "title": "Sprint 4"
+        },
+        "content": {
+          "body": "Part of #32\n\n## Task\nDefine clean persistence abstractions (IDocumentRepository, IDbRepository family), add Infrastructure/Persistence/ folder structure, and create INoSqlRepository contract.\n\n## Details\n- Add IDocumentRepository<T> for non-relational stores in Domain\n- Rename Infrastructure/Dapper/ \u2192 Infrastructure/Persistence/Dapper/\n- Establish folder convention for future backends\n- Remove dynamic dispatch from SqlRepository (stop assuming int IDs)\n\n## Affected Files\n- IRepository.cs, SqlRepository.cs, ISqlEntityMapping.cs\n- Infrastructure/Dapper/ \u2192 Infrastructure/Persistence/Dapper/ restructure\n\n**Sources:**\n- [Section #16 - No INoSqlRepository Contract](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#16-no-inosqlrepository-contract-for-non-relational-stores)\n- [Section #17 - No Folder Structure Separation](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#17-no-folder-structure-separation-for-persistence-technologies)\n- [Section #18 - No Pure Abstraction for Persistence](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#18-no-pure-abstraction-for-persistence)\n",
+          "number": 36,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Clean persistence abstractions and folder structure (Part of #32)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/36"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJbM",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Clean persistence abstractions and folder structure (Part of #32)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "1673aaa1",
+          "startDate": "2026-09-04",
+          "title": "Sprint 5"
+        },
+        "content": {
+          "body": "Part of #32\n\n## Task\nAdd optimistic concurrency control to all repository writes.\n\n## Details\n- Use PostgreSQL xmin system column as implicit row version, or add explicit RowVersion column\n- Update all UPDATE/DELETE statements to include WHERE xmin = @ExpectedVersion\n- Propagate concurrency failures to application layer\n\n## Affected Files\n- SqlRepository.cs (all Update/Delete methods)\n- DapperUnitOfWork.cs\n- All ISqlEntityMapping implementations (add xmin to SELECT)\n- All tables: ALTER TABLE scripts if using explicit RowVersion\n\n**Source:**\n- [Section #23 - No Optimistic Concurrency Control](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#23-no-optimistic-concurrency-control)\n",
+          "number": 37,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Optimistic concurrency control (Part of #32)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/37"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJcE",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Optimistic concurrency control (Part of #32)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "62a037e8",
+          "startDate": "2026-09-18",
+          "title": "Sprint 6"
+        },
+        "content": {
+          "body": "Part of #32\n\n## Task\nAdd affected row count checks to all repository Update and Delete operations.\n\n## Details\n- Check db.Execute() return value in SqlRepository.Update() and Delete()\n- Throw ConcurrencyException (or return Result) when zero rows affected\n- Apply across all bounded contexts that use the shared SqlRepository base\n\n## Affected Files\n- SqlRepository.cs\n- All Repository implementations\n\n**Source:**\n- [Section #24 - Ignored Affected Row Counts](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#24-ignored-affected-row-counts-from-writes)\n",
+          "number": 38,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Affected row count checks from writes (Part of #32)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/38"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJcs",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Affected row count checks from writes (Part of #32)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "efc2d425",
+          "startDate": "2026-10-02",
+          "title": "Sprint 7"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nFix the broken transaction boundary in QuickRegisterCommunityCommand and add pagination to all list queries.\n\n## Details\n- Wrap QuickRegister's 4 SaveChangesAsync calls in a single transaction with one commit\n- Add LIMIT/OFFSET pagination to ToolRepository.GetAllAsync and all GeographyQueries list methods\n- Add page/pageSize parameters to repository and query interfaces\n\n## Affected Files\n- QuickRegisterCommunityCommand.cs\n- ToolRepository.cs:7, GeographyQueries.cs list methods\n- ToolMapping.cs (add pagination support)\n\n**Sources:**\n- [Section #6 - Communities: Broken Transactional Boundary in QuickRegister](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#6-communities-broken-transactional-boundary-in-quickregister)\n- [Section #21 - No Pagination on Any List Query](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#21-no-pagination-on-any-list-query)\n",
+          "number": 4,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] QuickRegister transaction fix and pagination (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/4"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJdw",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] QuickRegister transaction fix and pagination (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9991772e",
+          "startDate": "2026-10-16",
+          "title": "Sprint 8"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nInject ISqlUnitOfWork into GeographyQueries and DashboardQueries instead of connectionString.\n\n## Details\n- Replace constructor dependency from string connectionString to ISqlUnitOfWork\n- Remove independent NpgsqlConnection creation in all 3 GeographyQueries methods and DashboardQueries\n- Update DI registration in Program.cs\n\n## Affected Files\n- GeographyQueries.cs, DashboardQueries.cs\n- Program.cs\n\n**Sources:**\n- [Section #26 - Separate Connections Bypassing the Scoped Unit of Work](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#26-separate-connections-bypassing-the-scoped-unit-of-work)\n- [Section #27 - Unnecessary TCP Connections for Read Queries](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#27-unnecessary-tcp-connections-for-read-queries)\n",
+          "number": 5,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Query layer: inject ISqlUnitOfWork instead of connectionString (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/5"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJeg",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Query layer: inject ISqlUnitOfWork instead of connectionString (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "22af0a57",
+          "startDate": "2026-11-13",
+          "title": "Sprint 10"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nAdd constructor validation and named factory methods to all Soup Kitchen aggregates.\n\n## Details\n- Make Event, Guest, Meal, Volunteer, Donation constructors internal\n- Add static factory methods (e.g., Event.Create(name, ...) returning Result<Event>)\n- Add guard clauses: null/empty strings, past dates, negative values, zero max guests\n- Add private set encapsulation\n\n## Affected Files\n- Event.cs, Guest.cs, Meal.cs, Volunteer.cs, Donation.cs\n\n**Source:**\n- [Section #7 - Soup Kitchen: Public Constructors, Zero Validation](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#7-soup-kitchen-public-constructors-zero-validation)\n",
+          "number": 4,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Constructor validation and factory methods for aggregates (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/4"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJfI",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Constructor validation and factory methods for aggregates (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "e1d8c409",
+          "startDate": "2026-11-27",
+          "title": "Sprint 11"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nConvert Meal, Guest, Volunteer, and Donation to child entities of the Event aggregate.\n\n## Details\n- Move child entities under Event aggregate namespace\n- Remove individual IRepository interfaces for Meal/Guest/Volunteer/Donation\n- Access child entities through Event aggregate only\n- Update application handlers and repository implementations\n\n## Affected Files\n- Meal.cs, Guest.cs, Volunteer.cs, Donation.cs (move to Event aggregate)\n- IRepository interfaces and implementations for these entities\n- All application handlers that create/query these entities directly\n\n**Source:**\n- [Section #5 - The Not-Aggregate Roots](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#5-the-not-aggregate-roots)\n",
+          "number": 5,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Convert Meal/Guest/Volunteer/Donation to child entities (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/5"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJgE",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Convert Meal/Guest/Volunteer/Donation to child entities (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "b14ffede",
+          "startDate": "2026-12-25",
+          "title": "Sprint 13"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nAdd encapsulation, factory methods, and domain behavior to UserProfile.\n\n## Details\n- Add IAggregateRoot marker to UserProfile\n- Make all property setters private set\n- Add static factory method UserProfile.Create(firstName, lastName) returning Result<UserProfile>\n- Add domain behavior methods: SetLockoutEnd(), UpdateProfile() with guard clauses\n- Add Entity base class, domain events collection if missing\n- Update all application handlers to call domain methods instead of setting properties directly\n\n## Affected Files\n- UserProfile.cs in TSQR.Identity.Domain\n- ProfileRepository.cs, UserAdminRepository.cs\n- All application handlers that set UserProfile properties directly\n\n**Source:**\n- [Section #8 - Identity: Completely Anemic Domain](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#8-identity-completely-anemic-domain)\n",
+          "number": 3,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] UserProfile encapsulation and domain behavior (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/3"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJg4",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] UserProfile encapsulation and domain behavior (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ec87525b",
+          "startDate": "2027-01-08",
+          "title": "Sprint 14"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nCreate Role domain model with proper encapsulation and update application handlers.\n\n## Details\n- Add IAggregateRoot to Role, make setters private set\n- Add factory method Role.Create(name, permissions) with validation\n- Add domain behavior: AddPermission(), RemovePermission()\n- Update handlers that currently manipulate Role as a DTO\n\n## Affected Files\n- Role.cs in TSQR.Identity.Domain\n- RoleRepository.cs\n- All application handlers that create/update roles\n\n**Source:**\n- [Section #8 - Identity: Completely Anemic Domain](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#8-identity-completely-anemic-domain)\n",
+          "number": 4,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Role domain model and handler updates (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/4"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJiI",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Role domain model and handler updates (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "00923610",
+          "startDate": "2027-02-19",
+          "title": "Sprint 17"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nCreate Ticket aggregate with state machine and full encapsulation.\n\n## Details\n- Define Ticket aggregate: Id (TicketId), Subject, Description, Category, Priority, Status\n- Define valid state transitions (e.g., Open \u2192 InProgress \u2192 Resolved \u2192 Closed, Closed cannot reopen)\n- Add factory method Ticket.Create() with validation\n- Add domain behavior: Submit(), Assign(), Resolve(), Reopen(), Close()\n- Raise domain events for each state change (TicketCreatedEvent, TicketResolvedEvent, etc.)\n- Add IRepository<Ticket, TicketId>\n- No more primitive parameters in ITicketsRepository\n\n## Affected Files\n- New files in TSQR.Support.Domain/\n- ITicketsRepository.cs \u2192 migrate to IRepository<Ticket, TicketId>\n- All application handlers\n\n**Source:**\n- [Section #14 - Support Context Has No Domain Model](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#14-support-context-has-no-domain-model)\n",
+          "number": 3,
+          "repository": "lstbob/tsqr-support",
+          "title": "[Tech] Ticket aggregate with state machine (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-support/issues/3"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJjQ",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-support",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Ticket aggregate with state machine (Part of #1)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9b1885dc",
+          "startDate": "2027-03-05",
+          "title": "Sprint 18"
+        },
+        "content": {
+          "body": "Part of #1\n\n## Task\nCreate Incident aggregate with investigation lifecycle and event wiring.\n\n## Details\n- Define Incident aggregate: Id (IncidentId), State (Investigating \u2192 Ongoing \u2192 Resolved), description, assigned team\n- Add factory method with validation\n- Add domain behavior: Escalate(), UpdateFindings(), Resolve()\n- Wire domain events for escalation and resolution notifications\n\n## Affected Files\n- New files in TSQR.Support.Domain/\n- ISupportQueries.cs\n- All application handlers\n\n**Source:**\n- [Section #14 - Support Context Has No Domain Model](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#14-support-context-has-no-domain-model)\n",
+          "number": 4,
+          "repository": "lstbob/tsqr-support",
+          "title": "[Tech] Incident aggregate with event wiring (Part of #1)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-support/issues/4"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgycJj0",
+        "labels": [
+          "tech-debt"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-support",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] Incident aggregate with event wiring (Part of #1)"
+      },
+      {
+        "content": {
+          "body": "",
+          "number": 39,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "test",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/39"
+        },
+        "id": "PVTI_lAHODNbEK84A7AFTzgycUVk",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "test"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ec87525b",
+          "startDate": "2027-01-08",
+          "title": "Sprint 14"
+        },
+        "content": {
+          "body": "## Problem\n\nThere is no CI/CD pipeline for any TSQR repository. Zero GitHub Actions exist across all repos. This means:\n- No automated test runs on push/PR\n- No linting or static analysis\n- No automated build verification\n- No deployment automation\n\n## Suggested Approach\n1. Set up GitHub Actions workflows for each .NET microservice (build + test)\n2. Add linting/formatting checks\n3. Add Docker image build and push for deployable services\n4. Consider a shared workflow template across repos\n\n## Affected Repos\n- tsqr-tool-lib, tsqr-autheo, tsqr-identity, tsqr-communities, tsqr-soup-kitchen, tsqr-support\n- tsqr-gateway, tsqr-ui, tsqr-support-ui\n- tsqr-deploy (orchestration)\n\n**Source:**\n- [post-analyi.txt (Item #15 - No CI/CD)](https://github.com/lstbob/tsqr-domain/blob/main/post-analyi.txt)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-deploy",
+          "title": "[Tech] CI/CD pipeline setup for all TSQR repos",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-deploy/issues/1"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyfQLU",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-deploy",
+        "size": "M",
+        "status": "Backlog",
+        "title": "[Tech] CI/CD pipeline setup for all TSQR repos"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "8d41fadf",
+          "startDate": "2026-07-24",
+          "title": "Sprint 2"
+        },
+        "content": {
+          "body": "## Problem\n\nOnly tsqr-tool-lib has any tests (12 unit tests total). All other microservices (autheo, identity, communities, soup-kitchen, support, gateway) have zero tests. This means:\n- No regression protection for domain logic\n- No validation of aggregate invariants\n- No handler-level testing\n- No integration tests for repositories\n\n## Suggested Approach\n1. Establish a shared test pattern (e.g., xUnit + Shouldly + NSubstitute)\n2. Add unit tests for domain aggregates in each context (start with the most critical invariants)\n3. Add handler-level tests for each command handler\n4. Add repository integration tests using a test PostgreSQL instance\n5. Aim for coverage of at least the domain layer and core command handlers\n\n## Affected Repos\n- tsqr-autheo, tsqr-identity, tsqr-communities, tsqr-soup-kitchen, tsqr-support\n- tsqr-gateway\n\n**Source:**\n- [post-analyi.txt (Item #16 - No tests outside tool-lib)](https://github.com/lstbob/tsqr-domain/blob/main/post-analyi.txt)\n",
+          "number": 40,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Test infrastructure across all TSQR microservices",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/40"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyfQLg",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "L",
+        "status": "Backlog",
+        "title": "[Tech] Test infrastructure across all TSQR microservices"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ec87525b",
+          "startDate": "2027-01-08",
+          "title": "Sprint 14"
+        },
+        "content": {
+          "body": "## Problem\n\nThere is no structured logging or distributed tracing across any TSQR microservice. This means:\n- Logs are plain text with no structured fields (cannot query by userId, communityId, etc.)\n- No correlation IDs across service boundaries\n- No distributed tracing to track requests through gateway \u2192 microservice \u2192 database\n- Debugging production issues requires manual log correlation\n\n## Suggested Approach\n1. Add a structured logging library (e.g., Serilog) with JSON formatting\n2. Add enrichers for common context (request ID, userId, communityId, correlation ID)\n3. Configure Seq or similar for log aggregation\n4. Add OpenTelemetry for distributed tracing across services\n5. Ensure correlation ID flows through gateway headers to all downstream services\n\n## Affected Files\n- tsqr-common (shared logging configuration)\n- All WebApi Program.cs files\n- All microservice repositories and handlers\n\n**Source:**\n- [post-analyi.txt (Item #17 - No structured logging / distributed tracing)](https://github.com/lstbob/tsqr-domain/blob/main/post-analyi.txt)\n",
+          "number": 1,
+          "repository": "lstbob/tsqr-common",
+          "title": "[Tech] Structured logging and distributed tracing",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-common/issues/1"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyfQMU",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-common",
+        "size": "S",
+        "status": "Backlog",
+        "title": "[Tech] Structured logging and distributed tracing"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9b1885dc",
+          "startDate": "2027-03-05",
+          "title": "Sprint 18"
+        },
+        "content": {
+          "body": "## Problem\n\ntsqr-tool-lib has schema-level issues shared across all microservices but not yet addressed by a dedicated issue:\n\n### SELECT * in mappings\nSome GetById mappings use SELECT * instead of explicit column lists (see ToolMapping.cs, MemberMapping.cs). This is fragile when columns change.\n\n### No CHECK constraints on INTEGER enums\nStatus, ToolType, AmortizationRate, Condition, ScarcityLevel columns are stored as plain INTEGER with no CHECK constraint. Invalid values like 99 will be silently accepted.\n\n### No indexes on critical query paths\nOnly implicit PK indexes on Id. No indexes on: Members.Email, Members.CommunityId, InventoryItems.Status, InventoryItems.CurrentHolderId, Reservations.ItemId, Loans.MemberId, Loans.Status.\n\n## Suggested Approach\n1. Replace SELECT * with explicit column lists in all mappings\n2. Add CHECK constraints for all INTEGER-encoded enum columns\n3. Add indexes on FK columns and frequently queried columns\n\n## Affected Files\n- All mapping files (*Mapping.cs)\n- SQL init scripts\n- All repository query methods\n\n**Source:**\n- [Section #19 - Schema Design: SELECT *, Missing Constraints, No Indexes](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad.md#19-schema-design-select--missing-constraints-no-indexes)\n",
+          "number": 41,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Schema hardening (Part of #32)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/41"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgyfQNQ",
+        "labels": [
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "size": "S",
+        "status": "Backlog",
+        "title": "[Tech] Schema hardening (Part of #32)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nFix two regressions from #34 that together break the reservation queue entirely.\n\n## Details\n- `Reservation.MoveDownInQueue()` increments `QueuePosition` instead of decrementing, so `ReservationQueueService.ShiftQueueAfterCancellation` *lengthens* queue gaps instead of tightening them (queue `[1,2,3,4]` after cancelling slot #2 becomes `[1,(c),4,5]` instead of `[1,(c),2,3]`). The handler documentation promises the opposite of what the code does.\n- `ReservationCreatedDomainEventHandler` calls `item.Reserve()` which throws on any non-`Available` item \u2014 so reservations cannot be created against loaned or already-reserved items at all, defeating the entire `QueuePosition` feature (positions 2,3,... can never exist).\n- Zero unit tests on `ReservationQueueService` \u2014 the regression went undetected.\n\n## Affected Files\n- `src/TSQR.ToolLibrary.Domain/Aggregates/ReservationAggregate/Reservation.cs:172-175` (rename `MoveDownInQueue` \u2192 `MoveUpInQueue`, decrement)\n- `src/TSQR.ToolLibrary.Domain/Services/ReservationQueueService.cs:19-30` (logic inverse)\n- `src/TSQR.ToolLibrary.Application/Events/ReservationCreatedDomainEventHandler.cs:7-17` (only the first reservation on an item should call `item.Reserve()`; later reservations just join the queue)\n- New unit tests in `tests/unit-tests/TSQR.ToolLibrary.Domain.UnitTests/`\n\n## Suggested Approach\n1. Rename `MoveDownInQueue` \u2192 `MoveUpInQueue`, change `QueuePosition++` \u2192 `QueuePosition--`.\n2. In `ReservationCreatedDomainEventHandler`: only invoke `item.Reserve()` when there are no existing `Pending`/`Confirmed`/`Active` reservations on the item; otherwise just persist the new reservation.\n3. Add unit tests for `ShiftQueueAfterCancellation` covering 1/2/3-slot input cases, and for `ReservationCreatedDomainEventHandler` covering first + subsequent reservations on loaned/reserved items.\n\n**Source:**\n- [Section #1 - ReservationQueueService Direction Bug + ReservationCreatedEvent Breakage](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#1-reservationqueueservice-direction-bug--reservationcreatedevent-breakage)",
+          "number": 43,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] ReservationQueueService direction bug + ReservationCreatedEvent breakage",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/43"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZIQ",
+        "labels": [
+          "bug",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "[Tech] ReservationQueueService direction bug + ReservationCreatedEvent breakage"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "## Task\nAdd caller-identity verification to all mutation commands that take an entity ID; currently any \"Regular\" role can cancel/activate/confirm any other member's reservation by ID.\n\n## Details\n- `ReservationsCommandController` exposes `[Authorize(Roles = \"Admin,LocationCoordinator,Repairman,Regular\")]` on `Cancel/Activate/ConfirmPickup/Complete` \u2014 `Regular` is included and no ownership check exists.\n- `CancelReservationCommand(ReservationId)` accepts only the ID; the handler never compares `reservation.MemberId` to the caller's `MemberId` claim.\n- `LoanToolCommand` lets the caller pass any `MemberId` in the request body \u2014 handler never confirms the caller is acting for that member.\n- No `[Authorize]` policy asserts \"caller's `MemberId` claim matches the mutated entity's owner.\"\n\n## Affected Files\n- `src/TSQR.ToolLibrary.WebApi/Controllers/ReservationsCommandController.cs`\n- `src/TSQR.ToolLibrary.WebApi/Controllers/ToolsCommandController.cs`\n- `src/TSQR.ToolLibrary.WebApi/Controllers/MembersCommandController.cs`\n- `src/TSQR.ToolLibrary.Application/Reservation/Commands/{Cancel,Activate,ConfirmPickup,Complete}ReservationCommand.cs`\n- `src/TSQR.ToolLibrary.Application/Loan/Commands/LoanToolCommand.cs`\n\n## Suggested Approach\n1. Pass the caller's `MemberId` / role claim into each command DTO alongside the entity ID.\n2. Verify ownership (or admin/coordinator role) inside each handler before mutating; return `ForbiddenError` if mismatched.\n3. Restrict `Cancel` and `ConfirmPickup` routes to \"self or Admin/LocationCoordinator\" via policies.\n\n**Source:**\n- [Section #2 - Authorization: No Ownership Checks](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#2-authorization-no-ownership-checks-on-reservationloanrepair-commands)",
+          "number": 44,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Authorization: ownership checks on reservation/loan/repair commands",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/44"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZJY",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "[Tech] Authorization: ownership checks on reservation/loan/repair commands"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "## Task\nWire the six domain events that aggregates raise but `DependencyInjection.cs` has no handler registered for.\n\n## Details\nThe dispatcher silently no-ops when no handler is registered. Currently orphaned:\n\n| Event | Raised by | Intended side effect |\n|---|---|---|\n| `ToolRegisteredEvent` | `Tool.Register()` | Downstream notification / catalog indexing |\n| `ItemLoanedDomainEvent` | `InventoryItem.Loan()` | Member ledger / eligibility refresh |\n| `LoanOverdueDomainEvent` | `Loan.EndLoan()` | Overdue escalation / member suspension |\n| `ReservationConfirmedEvent` | `Reservation.ConfirmPickup()` | Pickup-window tracking |\n| `ToolRepairedEvent` | `MaintenanceRecord.Complete()` | Release item from `UnderMaintenance` \u2192 `Available` |\n| `MemberVerifiedEvent` | `Member.Verify()` | Authorization refresh / audit |\n\n## Affected Files\n- `src/TSQR.ToolLibrary.Application/DependencyInjection.cs:65-73`\n- New handler files in `src/TSQR.ToolLibrary.Application/Events/`\n\n## Suggested Approach\n- Either delete the orphaned events (if no current consumer needs them) or add concrete handlers.\n- Add a unit test asserting every raised event has at least one registered handler (a \"no orphaned events\" contract test).\n\n**Source:**\n- [Section #3 - Six Orphaned Domain Event Handlers](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#3-six-orphaned-domain-event-handlers)",
+          "number": 45,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Wire orphaned domain event handlers",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/45"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZK0",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "[Tech] Wire orphaned domain event handlers"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "Part of #35\n\n## Task\nAdd the `RenewLoanCommand` + handler + DI registration + `POST /api/loans/{id}/renew` endpoint to make the `Loan.Renew` domain method (added in #35) actually reachable from production.\n\n## Details\n- `Loan.Renew(maxLoanDurationDays, maxRenewalCount)` exists (`Loan.cs:196-215`) with 3 passing tests.\n- No `RenewLoanCommand`, no `IInteractor` registration, no controller route exposes it.\n- `Policy.MaxRenewalCount` is loaded for `LoanToolCommand` and `ReserveToolCommand` but never consulted by either handler.\n\nThe feature is half-wired and dead in production \u2014 the contract looks complete but is unreachable.\n\n## Affected Files\n- `src/TSQR.ToolLibrary.Application/DependencyInjection.cs:45-50`\n- New `src/TSQR.ToolLibrary.Application/Loan/Commands/RenewLoanCommand.cs`\n- `src/TSQR.ToolLibrary.WebApi/Controllers/LoansCommandController.cs`\n\n## Suggested Approach\nAdd `RenewLoanCommand(LoanId)` + handler:\n1. Load the loan.\n2. Resolve the `Tool` via `InventoryItem.ToolId`.\n3. Load the `Policy` by `(ToolType, locationId: null)`.\n4. Call `loan.Renew(policy.MaxLoanDurationDays, policy.MaxRenewalCount)`.\n5. `loanRepository.Update` + `orchestrator.SaveEntitiesAsync`.\n\nAdd the controller route + DI registration.\n\n**Source:**\n- [Section #4 - RenewLoanCommand Deferred](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#4-renewloancommand--endpoint-deferred)",
+          "number": 46,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] RenewLoanCommand handler + endpoint (Part of #35)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/46"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZL0",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "[Tech] RenewLoanCommand handler + endpoint (Part of #35)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "Part of epic #1 (audit \u00a71)\n\n## Task\n`MarkToolForRepairCommandHandler` still mutates `InventoryItem` AND creates `MaintenanceRecord` in a single transaction. The other three boundary violations in audit \u00a71 (#33 covered RegisterTool, LoanTool, ReserveTool) were moved to event-driven side effects \u2014 this one was left behind.\n\n## Details\n```csharp\nvar markResult = item.MarkForRepair(...)                          // mutate InventoryItem\nvar recordResult = MaintenanceRecord.Create(...)                  // create MaintenanceRecord\nawait maintenanceRepository.AddAsync(record, ct);\ninventoryRepository.Update(item);\nawait orchestrator.SaveEntitiesAsync([item, record], ct);         // 2 aggregates in 1 tx\n```\n\n`item.MarkForRepair()` already raises `ToolMarkedForRepairEvent` \u2014 the `MaintenanceRecord` creation belongs in a `ToolMarkedForRepairNotificationHandler`, parallel to how `InventoryItemRequiredEvent` works for tool registration.\n\n## Affected Files\n- `src/TSQR.ToolLibrary.Application/Inventory/Commands/MarkToolForRepairCommand.cs:11-32`\n- `src/TSQR.ToolLibrary.Application/Events/ToolMarkedForRepairNotificationHandler.cs` (extend to create the record, OR add a dedicated `MaintenanceRecordRequiredHandler`)\n- `src/TSQR.ToolLibrary.Application/DependencyInjection.cs`\n\n## Suggested Approach\n1. Remove the inline `MaintenanceRecord.Create`/`AddAsync` from the command.\n2. Either extend `ToolMarkedForRepairNotificationHandler` (currently cancels reservations) to also create the `MaintenanceRecord`, or add a dedicated handler keyed on `ToolMarkedForRepairEvent`.\n3. The originating command then mutates only `InventoryItem` per tx.\n\n**Source:**\n- [Section #5 - MarkToolForRepairCommandHandler Still Violates One-Aggregate-Per-Tx](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#5-marktoolforrepaircommandhandler-still-violates-one-aggregate-per-tx)",
+          "number": 47,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] Complete one-aggregate-per-tx refactor: MarkToolForRepairCommand (Part of #1 epic)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/47"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZOI",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "[Tech] Complete one-aggregate-per-tx refactor: MarkToolForRepairCommand (Part of #1 epic)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "## Task\nRestore domain-shaped `Result` errors for loan rejection (post-#33 regression) and gate borrowing on outstanding fines / overdue loans (opened up by #35).\n\n## Details\n**(a)** `LoanToolCommandHandler` post-#33 never loads the `InventoryItem` and goes straight to `Loan.Create`. The `InventoryItem.Loan()` side effect was moved into `LoanCreatedDomainEventHandler:9-17` whose only escape paths are succeed or throw `InvalidOperationException`. A user loaning an already-loaned / `Lost` / non-existent item receives `500 Internal Server Error` (via `ExceptionHandlingMiddleware`) instead of a clean `DomainError` 400.\n\n**(b)** `Member.IsEligibleToBorrow` (`Member.cs:222-225`) only checks `IsVerified && Status == Active`. With #35 making fines snapshot-driven and actually accruable, a member who returned a tool 6 months late and owes the library $200 can immediately borrow another. There is also no invariant that a member can't hold two active loans on the same item (currently enforced only incidentally via `InventoryItem.Loan`'s status check).\n\n## Affected Files\n- `src/TSQR.ToolLibrary.Application/Loan/Commands/LoanToolCommand.cs`\n- `src/TSQR.ToolLibrary.Domain/Aggregates/MemberAggregate/Member.cs:222-225`\n- `src/TSQR.ToolLibrary.Application/Events/LoanCreatedDomainEventHandler.cs`\n- New `src/TSQR.ToolLibrary.Domain/Services/MemberBorrowingEligibilityService.cs` (or extend `Member`)\n- New `ILoanRepository.GetActiveLoansByMemberAsync(MemberId, ...)` query\n\n## Suggested Approach\n1. Load `InventoryItem` in the command; pre-check loanability; only then call `Loan.Create`.\n2. Add an `ILoanRepository.GetActiveLoansByMemberAsync` lookup in `LoanToolCommandHandler`; reject if outstanding fine balance > threshold, or if the member already has an active loan on the same item.\n3. Either enhance `Member.IsEligibleToBorrow(outstandingFines, activeOverdueLoans)` or split eligibility into a `MemberBorrowingEligibilityService` domain service.\n\n**Source:**\n- [Section #6 - LoanToolCommand Lost Loanability Pre-check + IsEligibleToBorrow Ignores Fines](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#6-loantoolcommand-lost-loanability-pre-check--memberiseligibletoborrow-ignores-fines)",
+          "number": 48,
+          "repository": "lstbob/tsqr-tool-lib",
+          "title": "[Tech] LoanToolCommand loanability pre-check + Member.IsEligibleToBorrow fine/overdue gate",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-tool-lib/issues/48"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZPY",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-tool-lib",
+        "status": "Backlog",
+        "title": "[Tech] LoanToolCommand loanability pre-check + Member.IsEligibleToBorrow fine/overdue gate"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nTighten communities authorization \u2014 currently any authenticated user can confirm/rename/update any community, and `QuickRegister` is fully anonymous.\n\n## Details\n- `CommunitiesCommandController` is decorated with bare `[Authorize]` (no role / no policy). All write endpoints (`Confirm`, `Update`, `Create`) accept any authenticated caller.\n- `QuickRegister` overrides with `[AllowAnonymous]` and persists real geography rows + a `PendingConfirmation` community from completely unauthenticated traffic.\n- There is no domain concept of \"Community Moderator\", \"Platform Administrator\", or \"Community Owner\".\n\n## Affected Files\n- `src/TSQR.Communities.WebApi/Controllers/CommunitiesController.cs:68-105`\n- `src/TSQR.Communities.WebApi/Program.cs:42-45` (configure authorization policies)\n- All write controllers in `TSQR.Communities.WebApi`\n\n## Suggested Approach\n1. Introduce `PlatformAdmin` and `CommunityModerator` authorization policies via `AddAuthorization(opts => opts.AddPolicy(\"PlatformAdmin\", p => p.RequireRole(\"Admin\")))`.\n2. Apply `[Authorize(Policy = \"PlatformAdmin\")]` to `Confirm`; `[Authorize(Policy = \"CommunityModerator\")]` to `Update`.\n3. Either remove `[AllowAnonymous]` from `QuickRegister` or rate-limit + verify email before persisting the pending community.\n\n**Source:**\n- [Section #7 - Authorization Wide Open; QuickRegister Is Anonymous](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#7-authorization-wide-open-quickregister-is-anonymous)",
+          "number": 6,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Authorization: write controllers wide open; QuickRegister is anonymous",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/6"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZQU",
+        "labels": [
+          "bug",
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "status": "Backlog",
+        "title": "[Tech] Authorization: write controllers wide open; QuickRegister is anonymous"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9b1885dc",
+          "startDate": "2027-03-05",
+          "title": "Sprint 18"
+        },
+        "content": {
+          "body": "Part of epic #1 (#1 covers `Community` lifecycle)\n\n## Task\nThree cohesive issues: add state-machine guards on `Community`; add the two missing commands/handlers/endpoints; add UNIQUE constraints to the schema for natural keys.\n\n## Details\n**(a) Unconditional state-setting on aggregate:** `Community.cs:29-31`:\n```csharp\npublic void Confirm()  { Status = CommunityStatus.Active; }\npublic void Suspend()  { Status = CommunityStatus.Suspended; }\npublic void Archive()  { Status = CommunityStatus.Archived; }\n```\n`Confirm()` re-activates communities already `Active`/`Archived`. `Archive()` accepts `PendingConfirmation`. Mirrors audit \u00a713 but on a different aggregate.\n\n**(b) Unreachable behavior:** `Suspend()` / `Archive()` defined but no command/handler/endpoint. The \"Suspended\" state is named in `CommunityStatus` and seeded into `DashboardQueries.cs:14` but the dashboard COUNT(*) is forever zero.\n\n**(c) Missing UNIQUE on natural keys:**\n- `tsqr-deploy/infra/07-communities.sql:22-32` \u2014 `Communities.Slug` has no UNIQUE.\n- `07-communities.sql:4-20` \u2014 no UNIQUE on `Countries.Name`, `Cities(CountryId, Name)`, `Neighbourhoods(CityId, Name)`.\n- `QuickRegisterCommunityCommand.cs:26-53` find-or-create pattern silently duplicates Cities/Countries on concurrent calls.\n\n## Affected Files\n- `src/TSQR.Communities.Domain/Aggregates/CommunityAggregate/Community.cs`\n- Same for `City.cs` / `Neighbourhood.cs`\n- New `SuspendCommunityCommand` / `ArchiveCommunityCommand` + handlers\n- `src/TSQR.Communities.Application/DependencyInjection.cs:29-36`\n- `tsqr-deploy/infra/07-communities.sql`\n\n## Suggested Approach\n1. Each transition returns `Result`; add guards per source-state.\n2. Add `SuspendCommunityCommand` / `ArchiveCommunityCommand` handlers + endpoint + DI registration.\n3. Add `CREATE UNIQUE INDEX IX_Communities_Slug ON Communities(Slug)` (partial, excluding soft-deleted).\n4. Add `UNIQUE (CountryId, Name)` on Cities and `UNIQUE (CityId, Name)` on Neighbourhoods.\n5. Add unit tests for every transition (illegal source-state rejected, legal accepted).\n\n**Source:**\n- [Section #8 - State-Transition Guards + UNIQUE Constraints + Suspend/Archive Commands](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#8-state-transition-guards--unique-constraints--suspendarchive-commands)",
+          "number": 7,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] State-transition guards + UNIQUE constraints + Suspend/Archive commands",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/7"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZRE",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "status": "Backlog",
+        "title": "[Tech] State-transition guards + UNIQUE constraints + Suspend/Archive commands"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9b1885dc",
+          "startDate": "2027-03-05",
+          "title": "Sprint 18"
+        },
+        "content": {
+          "body": "## Task\nClean architecture currently violated twice over: raw SQL is embedded in WebApi controllers, and read-side query contracts (`IDashboardQueries`, `IGeographyQueries`) live in the Domain layer.\n\n## Details\n**(a)** `CommunitiesReadController.cs:11-65`, `CitiesReadController.cs:11-22`, `CountriesReadController.cs:11-20`, `NeighbourhoodsReadController.cs:11-22` all inject `ISqlUnitOfWork` and execute Dapper SQL inline \u2014 controllers are simultaneously HTTP handler + query handler + SQL writer.\n\n**(b)** `src/TSQR.Communities.Domain/IDashboardQueries.cs:3` and `IGeographyQueries.cs:5-10` place query interfaces and `DashboardStatsData` record in the Domain project. The audit praises \"Domain layer has zero infrastructure dependencies\" (v1 \u00a73); these pull persistence/query concerns into the Domain.\n\n## Affected Files\n- All `*ReadController.cs` (remove direct `ISqlUnitOfWork` dependency)\n- `src/TSQR.Communities.Domain/IDashboardQueries.cs`\n- `src/TSQR.Communities.Domain/IGeographyQueries.cs`\n- `src/TSQR.Communities.Domain/DashboardStatsData.cs` (or wherever the record lives)\n- New `src/TSQR.Communities.Application/Queries/ICommunityQueries.cs`\n- New `src/TSQR.Communities.Infrastructure/Dapper/Queries/CommunityQueries.cs`\n\n## Suggested Approach\n1. Move `IDashboardQueries`, `IGeographyQueries`, and `DashboardStatsData` into the Application layer.\n2. Add a new `ICommunityQueries` interface in the Application layer for the controller-embedded raw SQL.\n3. Implement `CommunityQueries` in Infrastructure using raw Dapper.\n4. Controllers depend only on query interfaces, never on `ISqlUnitOfWork`.\n\n**Source:**\n- [Section #9 - Read Query Layer Is in the Wrong Place](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#9-read-query-layer-is-in-the-wrong-place-webapi--domain)",
+          "number": 8,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Move read queries out of WebApi; hoist query contracts out of Domain",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/8"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZRk",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "status": "Backlog",
+        "title": "[Tech] Move read queries out of WebApi; hoist query contracts out of Domain"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ec87525b",
+          "startDate": "2027-01-08",
+          "title": "Sprint 14"
+        },
+        "content": {
+          "body": "## Task\nThree modeling refinements: make `Community.Slug` immutable past creation; replace primitive-`int` FKs in entity constructors with the existing value-object ID types; introduce a `CountryCode` value object.\n\n## Details\n**(a)** `Community.cs:32-39` \u2014 `UpdateDetails` silently rewrites `Slug` from `Name` on every PUT, breaking URL stability and risking collisions (no `UNIQUE` constraint at DB level \u2014 addressed in #7).\n\n**(b)** `City.cs:10` (`int countryId`), `Neighbourhood.cs:10` (`int cityId`), `Community.cs:16` (`int neighbourhoodId`) \u2014 value-object ID types (`CountryId`, `CityId`, `NeighbourhoodId`) exist but are NOT used on cross-aggregate references. `IGeographyQueries` returns bare `int?`, forcing the handler to pass raw ints back into primitive-obsessed constructors.\n\n**(c)** `Country.cs:10-14`:\n```csharp\npublic Country(string name, string code) {\n    Name = name;\n    Code = code.ToUpperInvariant();   // empty string, \"ABCDEFG\", \"123\", null \u2192 all accepted\n}\n```\nISO 3166-1 alpha-2 country code has a well-defined format (2 uppercase letters); nothing enforces this anywhere (domain, application, or schema). Schema has no `CHECK`/`UNIQUE` on `Countries.Code`.\n\n## Affected Files\n- `src/TSQR.Communities.Domain/Aggregates/CommunityAggregate/Community.cs`\n- `src/TSQR.Communities.Domain/Aggregates/CountryAggregate/Country.cs`\n- `src/TSQR.Communities.Domain/Aggregates/CityAggregate/City.cs`\n- `src/TSQR.Communities.Domain/Aggregates/NeighbourhoodAggregate/Neighbourhood.cs`\n- `src/TSQR.Communities.Domain/IGeographyQueries.cs` (return VO types)\n- `tsqr-deploy/infra/07-communities.sql`\n- New `src/TSQR.Communities.Domain/ValueObjects/CountryCode.cs`\n\n## Suggested Approach\n1. Treat `Slug` as immutable once assigned, or expose `ChangeSlug(newSlug)` with a uniqueness check.\n2. Change public constructors to take `CountryId` / `CityId` / `NeighbourhoodId`; reject `default` in the constructor. `IGeographyQueries` returns these VOs.\n3. Introduce a `CountryCode` value object (2-uppercase-letter validation); add `UNIQUE` on `Countries.Code` and `Countries.Name`.\n\n**Source:**\n- [Section #10 - Slug Immutability + VO-Typed FKs + CountryCode Value Object](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#10-slug-immutability--vo-typed-fks--countrycode-value-object)",
+          "number": 9,
+          "repository": "lstbob/tsqr-communities",
+          "title": "[Tech] Slug immutability + VO-typed FKs + CountryCode value object",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-communities/issues/9"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZSQ",
+        "labels": [
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-communities",
+        "status": "Backlog",
+        "title": "[Tech] Slug immutability + VO-typed FKs + CountryCode value object"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nEnforce `CommunityId` scoping across soup-kitchen reads/writes; remove `[AllowAnonymous]` from all read endpoints that currently expose cross-tenant PII.\n\n## Details\n- No `CommunityId` filter on any list query (`grep CommunityId` in `src/TSQR.SoupKitchen.WebApi/Queries` \u2192 zero matches): `GetEventsQuery.cs:13-37`, `GetMealsQuery.cs:11-37`, `GetGuestsQuery.cs:11-32`, `GetVolunteersQuery.cs:11-41`, `GetDonationsQuery.cs:11-31`.\n- Controllers force-default `CommunityId` to 1 from the request body: `EventsController.cs:48` and `:58`, plus `GuestsController.cs:38`, `MealsController.cs:39`, `VolunteersController.cs:39`, `DonationsController.cs:38`. `UpdateEventCommand.cs:24-31` lets an attacker re-tenant an existing event.\n- All read endpoints are `[AllowAnonymous]`: `EventsController.cs:10-12`, `GuestsController.cs:10-12`, `DonationsController.cs:10-12`, `MealsController.cs:10-12`, `VolunteersController.cs:10-12`, `DashboardController.cs:8-10`. Combined with the no-filter bug, the public internet can enumerate `?eventId=1,2,3,...` and harvest guest contact info / donor names / volunteer notes \u2014 a privacy breach.\n\n## Affected Files\n- All `*Controller.cs` read controllers (remove `[AllowAnonymous]`)\n- All `src/TSQR.SoupKitchen.WebApi/Queries/*.cs` (add `WHERE CommunityId = @CommunityId` to every query, list/detail/count/dashboard)\n- All `*Command.cs` handlers (derive `CommunityId` from JWT, never from body)\n- `src/TSQR.SoupKitchen.WebApi/Program.cs` (preserve `RequireAuthenticatedUser` fallback)\n\n## Suggested Approach\n1. Remove `[AllowAnonymous]` from all read controllers.\n2. Derive `CommunityId` from the authenticated member's JWT claim (the `mbr` / `cid` claim \u2014 see tsqr-autheo#6 for the claim contract).\n3. Add `WHERE CommunityId = @CommunityId` to every list, detail, count, and dashboard query.\n4. Reject `UpdateEventCommand`s whose `CommunityId` differs from the loaded aggregate's current `CommunityId`.\n\n**Source:**\n- [Section #11 - Multi-Tenancy Declared but Not Enforced; Reads Expose Cross-Tenant PII](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#11-multi-tenancy-declared-but-not-enforced-reads-expose-cross-tenant-pii)",
+          "number": 6,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Multi-tenancy enforcement + remove anonymous read endpoints",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/6"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZTM",
+        "labels": [
+          "bug",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "status": "Backlog",
+        "title": "[Tech] Multi-tenancy enforcement + remove anonymous read endpoints"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "00923610",
+          "startDate": "2027-02-19",
+          "title": "Sprint 17"
+        },
+        "content": {
+          "body": "Part of epic #1 (audit \u00a75)\n\n## Task\nNone of `CreateGuestCommand`/`CreateMealCommand`/`CreateVolunteerCommand`/`CreateDonationCommand` validates that the referenced `EventId` exists, let alone that there is capacity \u2014 the entire `Event.MaxGuests` feature is decorative.\n\n## Details\n```csharp\npublic sealed class CreateGuestCommandHandler(\n    IRepository<Guest, GuestId> guestRepository)              // no Event repo injected\n{\n    public async Task<Result<GuestId>> ExecuteAsync(...) {\n        var guest = new Guest(request.EventId, request.Name, request.ContactInfo,\n                              request.GuestCount, request.CommunityId);\n        await guestRepository.AddAsync(guest, ct);            // EventId never validated\n    }\n}\n```\n\nAn attacker POSTing `{ \"EventId\": 999999 }` receives a 500 (Postgres FK violation through `ExceptionHandlingMiddleware`), never a typed `NotFoundError`. Capacity invariants (`SUM(GuestCount) <= Event.MaxGuests`) \u2014 the entire reason `MaxGuests` exists on `Event` \u2014 are never checked anywhere.\n\n## Affected Files\n- `src/TSQR.SoupKitchen.Application/GuestCommands/Commands/CreateGuestCommand.cs:13-19`\n- `src/TSQR.SoupKitchen.Application/MealCommands/Commands/CreateMealCommand.cs:15-26`\n- `src/TSQR.SoupKitchen.Application/VolunteerCommands/Commands/CreateVolunteerCommand.cs:14-25`\n- `src/TSQR.SoupKitchen.Application/DonationCommands/Commands/CreateDonationCommand.cs:14-25`\n- Optionally extend `Event` aggregate with `HasCapacity(int count)` method\n\n## Suggested Approach\n- **Option (a) preferred:** collapse `Guest`/`Meal`/`Volunteer`/`Donation` into the `Event` aggregate (audit \u00a75) so `Event.RegisterGuest(...)` enforces invariants atomically.\n- **Option (b):** keep them separate but load the `Event` in each handler; validate existence + community-match + `Event.HasCapacity(request.GuestCount)` via a domain service.\n\n**Source:**\n- [Section #12 - Cross-Aggregate Invariants: Event Existence/Capacity Checks Missing](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#12-cross-aggregate-invariants-event-existencecapacity-checks-missing-in-child-commands)",
+          "number": 7,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Cross-aggregate invariants: Event existence/capacity checks in child commands",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/7"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZU0",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "status": "Backlog",
+        "title": "[Tech] Cross-aggregate invariants: Event existence/capacity checks in child commands"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "00923610",
+          "startDate": "2027-02-19",
+          "title": "Sprint 17"
+        },
+        "content": {
+          "body": "## Task\nThree \"domain lies\" that need closing: state machines are unenforced; `Donation` has zero behavior; aggregate methods have no command handlers.\n\n## Details\n**(a) State machines unenforced:** `Event.cs:45-58`:\n```csharp\npublic void Cancel()   { Status = EventStatus.Cancelled; }\npublic void Complete() { Status = EventStatus.Completed; }\npublic void Activate() { Status = EventStatus.Active;   }\n// no guard on previous Status\n```\nA `Completed` event can be re-`Activate()`d; a `Cancelled` event can be `Complete()`d. Same at `Guest.cs:27-35` and `Volunteer.cs:27-35`. `UpdateEventCommand.cs:29` raw-casts `(EventStatus)request.Status` with no range or transition check.\n\n**(b) `Donation` has literally zero behavior:** `Donation.cs:1-26` is just public fields and a constructor. No `Cancel`/`Refund`/`CorrectQuantity`/`MarkReceived`. `DonationMapping.cs` has `UpdateSql`/`ToUpdateParameters` but no handler ever calls `donationRepository.Update`.\n\n**(c) Domain methods unreachable from API:** `Guest.Confirm/Cancel`, `Volunteer.Confirm/Cancel`, `Event.Cancel/Complete/Activate` exist; no command handlers exist (`ls Application/*/Commands/` returns only Create*). The only way to \"confirm\" a guest today is raw SQL \u2014 the named API the domain advertises is fictional.\n\n## Affected Files\n- `src/TSQR.SoupKitchen.Domain/Aggregates/EventAggregate/Event.cs`\n- `src/TSQR.SoupKitchen.Domain/Aggregates/GuestAggregate/Guest.cs`\n- `src/TSQR.SoupKitchen.Domain/Aggregates/VolunteerAggregate/Volunteer.cs`\n- `src/TSQR.SoupKitchen.Domain/Aggregates/DonationAggregate/Donation.cs` (add behavioral methods)\n- New `ConfirmGuestCommandHandler`, `CancelVolunteerCommandHandler`, `CancelEventCommandHandler`, etc.\n- `src/TSQR.SoupKitchen.Application/DependencyInjection.cs:13-41`\n\n## Suggested Approach\n1. Add state-machine guards (`if (Status == ...) return Result.Failure(...)`); return `Result`.\n2. Add `Donation.Cancel(reason)`, `CorrectQuantity(int)`, `MarkReceived()` methods that raise domain events and enforce invariants.\n3. Add the missing command handlers + DI registrations + controller endpoints.\n\n**Source:**\n- [Section #13 - Unreachable Behavior: State Machines, Donation Aggregate, and Command Handlers](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#13-unreachable-behavior-state-machines-donation-aggregate-and-command-handlers)",
+          "number": 8,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] State-machine guards on Event/Guest/Volunteer + Donation behavior + command handlers for unreachable methods",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/8"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZV8",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "status": "Backlog",
+        "title": "[Tech] State-machine guards on Event/Guest/Volunteer + Donation behavior + command handlers for unreachable methods"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ec87525b",
+          "startDate": "2027-01-08",
+          "title": "Sprint 14"
+        },
+        "content": {
+          "body": "## Task\nThree scaffold issues: missing UNIQUE on `Volunteers(EventId, MemberId)`; domain event dispatcher built but never wired; `DapperUnitOfWork.SaveChangesAsync` returns hardcoded `0` despite the `Task<int>` contract.\n\n## Details\n**(a) Missing UNIQUE on natural keys:** `tsqr-deploy/infra/06-soup-kitchen.sql:25-33` \u2014 `Volunteers` has no `UNIQUE (EventId, MemberId)`. The domain has no `Volunteer.HasAlreadySignedUp(...)` check either \u2014 a member can volunteer for the same event 5 times.\n\n**(b) Domain event dispatcher built but never wired:** `src/TSQR.SoupKitchen.Application/Events/IDomainEventDispatcher.cs` and `DomainEventDispatcher.cs` exist; `Program.cs` never registers `IDomainEventDispatcher` in DI; `grep AddDomainEvent` returns only the definition (`Entity.cs:9`) with zero callers; no `IDomainEvent` implementation types exist (no `EventCreated`, `GuestRegistered`, `DonationReceived`). Entire framework is orphan code.\n\n**(c) UnitOfWork contract lies:** `src/TSQR.SoupKitchen.Infrastructure/Dapper/DapperUnitOfWork.cs:30-58` \u2014 `SaveChangesAsync` returns a hardcoded `int 0` despite the `Task<int> SaveChangesAsync(...)` contract. The retry loop also re-issues `CommitAsync` after a rollback without re-running the Dapper commands, silently committing an empty transaction.\n\n## Affected Files\n- `tsqr-deploy/infra/06-soup-kitchen.sql` (add `UNIQUE (EventId, MemberId)` on Volunteers, similar to Guests)\n- `src/TSQR.SoupKitchen.WebApi/Program.cs` (register `IDomainEventDispatcher`)\n- New event records + aggregate raises\n- `src/TSQR.SoupKitchen.Domain/IUnitOfWork.cs` (change to `Task`) OR `DapperUnitOfWork.cs` (aggregate affected rows)\n\n## Suggested Approach\n1. Add `UNIQUE (EventId, MemberId)` on Volunteers; add a domain-level guard for in-process validation.\n2. Either delete the unused `Application/Events/` dispatcher files, OR complete the pipeline (register in DI, define record types like `EventCreated`/`GuestRegistered`/`DonationReceived`, raise them inside aggregate factory methods, dispatch in a `SaveChangesAsync` decorator).\n3. Either drop the `Task<int>` contract to `Task`, OR track affected rows in the repositories and aggregate them in the UoW. Also fix the retry loop to re-execute commands or document the limitation.\n\n**Source:**\n- [Section #14 - Unique Constraints + Domain Events + Faithful UnitOfWork](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#14-unique-constraints--domain-events--faithful-unitofwork)",
+          "number": 9,
+          "repository": "lstbob/tsqr-soup-kitchen",
+          "title": "[Tech] Unique constraints + wire domain event dispatcher + faithful UnitOfWork",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-soup-kitchen/issues/9"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZWk",
+        "labels": [
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-soup-kitchen",
+        "status": "Backlog",
+        "title": "[Tech] Unique constraints + wire domain event dispatcher + faithful UnitOfWork"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ac805860",
+          "startDate": "2026-12-11",
+          "title": "Sprint 12"
+        },
+        "content": {
+          "body": "## Task\nThe email-change feature is non-functional: confirm handler is a no-op, request handler mints a token and returns it in the HTTP body without persisting it. `pending_email_changes` table exists in schema but is unreferenced.\n\n## Details\n- `src/TSQR.Identity.Application/Commands/Profile/ChangeEmailCommand.cs:5-11`:\n  ```csharp\n  public Task<Result> ExecuteAsync(ChangeEmailCommand command, CancellationToken ct = default)\n  {\n      return Task.FromResult(Result.Success());   // does literally nothing\n  }\n  ```\n- `src/TSQR.Identity.Application/Commands/Profile/RequestEmailChangeCommand.cs:10-14`:\n  ```csharp\n  var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));\n  return Result<string>.Success(token);   // never persisted anywhere\n  ```\n- `tsqr-deploy/infra/05-identity.sql:27-35` defines `pending_email_changes` (with 3 indexes) \u2014 `grep pending_email_changes` across all `.cs` files returns **zero matches**. No entity, no repository, no handler.\n- `src/TSQR.Identity.Api/Controllers/ProfileController.cs:63-68` returns the security token directly to the caller in the HTTP body \u2014 defeats the entire purpose of email verification.\n\n## Affected Files\n- `src/TSQR.Identity.Application/Commands/Profile/ChangeEmailCommand.cs`\n- `src/TSQR.Identity.Application/Commands/Profile/RequestEmailChangeCommand.cs`\n- `src/TSQR.Identity.Api/Controllers/ProfileController.cs:57-83`\n- New `PendingEmailChange` aggregate or repository over `pending_email_changes`\n- `tsqr-deploy/infra/05-identity.sql` (verify schema matches what handler persists against)\n\n## Suggested Approach\n1. Introduce a `PendingEmailChange` aggregate whose lifecycle is `Requested \u2192 Confirmed/Expired`.\n2. `RequestEmailChange` should persist `(userId, newEmail, SHA256(token), expiresAt)`, dispatch the raw token via an out-of-band email-sending domain event / handler, and return `Success` *without* the token.\n3. `ChangeEmail` should load by token hash, verify expiry, then update autheo's `Users.Email` (or raise an `EmailChanged` integration event for autheo to consume \u2014 see tsqr-autheo#6 / tsqr-common#3 for integration events story).\n4. Drop the `string` return type from `RequestEmailChange` \u2014 callers should not see the token.\n\n**Source:**\n- [Section #15 - Email-Change Feature Is Non-Functional + Token Returned in Body](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#15-email-change-feature-is-non-functional--token-returned-in-http-body)",
+          "number": 5,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Implement email-change feature end-to-end (non-functional + token returned in body)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/5"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZXo",
+        "labels": [
+          "bug",
+          "audit-v2",
+          "security"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "status": "Backlog",
+        "title": "[Tech] Implement email-change feature end-to-end (non-functional + token returned in body)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "00923610",
+          "startDate": "2027-02-19",
+          "title": "Sprint 17"
+        },
+        "content": {
+          "body": "Part of epic #1 (#8 covers UserProfile/Role anemic domain)\n\n## Task\nThe audit's \u00a78 was inaccurate \u2014 identity has neither an `Entity` base nor `IAggregateRoot` applied. Scaffold is decorative: `IAggregateRoot` is defined but never used. Apply it properly with value objects.\n\n## Details\n- `src/TSQR.Identity.Domain/Contracts.cs:3` \u2014 empty `IAggregateRoot` marker.\n- `src/TSQR.Identity.Domain/Entities/UserProfile.cs:3` and `Role.cs:3` \u2014 plain `sealed class`, no base, no `IAggregateRoot`, no `DomainEvents` collection, no identity equality, no `Id` wrapper.\n- v1 \u00a78 claimed identity \"*inherits the `Entity` base class which has a `DomainEvents` collection*\" \u2014 identity has neither.\n\nThis single refactor resolves #5 email-change, #7 Lock validation, #8 upsert race, #9 role permissions simultaneously.\n\n## Affected Files\n- `src/TSQR.Identity.Domain/Contracts.cs`\n- `src/TSQR.Identity.Domain/Entities/UserProfile.cs`\n- `src/TSQR.Identity.Domain/Entities/Role.cs`\n- New `src/TSQR.Identity.Domain/Common/Entity.cs` (or import from tsqr-common#2 \u2014 depends on shared-kernel refactor)\n- New value objects: `UserId`, `RoleId`, `Email`, `AvatarUrl`, `PersonName`, `Bio`\n\n## Suggested Approach\nPick one of:\n- **(a)** Delete the unused `IAggregateRoot` marker \u2014 be honest about the anemic model.\n- **(b) preferred:** Apply it: introduce an `Entity<TId>` base with identity equality + `DomainEvents` collection; mark `UserProfile : Entity<UserId>, IAggregateRoot`; route all mutation through named methods; add value objects for `UserId`, `Email`, `AvatarUrl`, `PersonName`, `Bio`.\n\nCoordinate with tsqr-common#2 (moving DDD base classes into shared kernel) \u2014 if both land, identity should consume the shared types.\n\n**Source:**\n- [Section #16 - IAggregateRoot Defined but Never Implemented; No Entity Base + No Value Objects](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#16-iaggregateroot-defined-but-never-implemented-no-entity-base--no-value-objects)",
+          "number": 6,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Introduce Entity base + IAggregateRoot + value objects (fixes audit \u00a78 foundation)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/6"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZY0",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "status": "Backlog",
+        "title": "[Tech] Introduce Entity base + IAggregateRoot + value objects (fixes audit \u00a78 foundation)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "00923610",
+          "startDate": "2027-02-19",
+          "title": "Sprint 17"
+        },
+        "content": {
+          "body": "## Task\n`LockUserCommand` accepts any `DateTime` with no validation, no record of who locked. Add proper Suspend/Reinstate commands with invariant guards and audit fields across the identity schema.\n\n## Details\n- `src/TSQR.Identity.Application/Commands/Users/LockUserCommand.cs:5,16-17`:\n  ```csharp\n  public record LockUserCommand(string UserId, DateTime? LockoutEnd);\n  ...\n  user.LockoutEnd = command.LockoutEnd;   // no validation\n  user.UpdatedAt = DateTime.UtcNow;       // no record of WHO locked them\n  ```\n- `src/TSQR.Identity.Api/Controllers/UsersController.cs:87-90` \u2014 \"unlock\" is implemented as `Lock(null)` \u2014 a controller hack reusing the same command.\n- A past-dated `LockoutEnd` is silently meaningless. A year-9999 future date is unbounded. There's no \"lock reason,\" no \"locked by.\"\n- `grep -rn 'CreatedBy|UpdatedBy|DeletedBy'` across the repo returns **zero**. Every handler sets `UpdatedAt` but never records who. `user_roles` join has no `AssignedAt`/`AssignedBy` \u2014 for an identity/admin service this is a compliance gap.\n\n## Affected Files\n- `src/TSQR.Identity.Application/Commands/Users/LockUserCommand.cs` (split into `SuspendUserCommand` + `ReinstateUserCommand`)\n- `src/TSQR.Identity.Domain/Entities/UserProfile.cs` (add `Suspend(DateTime, string reason, string lockedBy)` + `Reinstate()` methods with guards)\n- `tsqr-deploy/infra/05-identity.sql` (add `LockedBy` to `user_profiles`; add `AssignedAt`, `AssignedBy` to `user_roles`)\n- Every handler that mutates (populate audit fields from the JWT `sub` claim)\n- `src/TSQR.Identity.Api/Controllers/ProfileController.cs:33` (already extracts the caller identity \u2014 extend to all handlers)\n\n## Suggested Approach\n1. Add `UserProfile.Suspend(DateTime until, string reason, string lockedBy)` and `UserProfile.Reinstate()` methods with guards (`until > UtcNow`, `until < UtcNow + MaxLockout`).\n2. Raise `UserLockedOut`/`UserReinstated` domain events (after #16 introduces DomainEvents collection).\n3. Replace `LockUserCommand` with two separate commands: `SuspendUserCommand(userId, until, reason)` + `ReinstateUserCommand(userId)`.\n4. Add `CreatedBy`, `UpdatedBy` columns to `user_profiles` and `AssignedAt`, `AssignedBy` to `user_roles`; populate from the JWT `sub` claim in each handler.\n\n**Source:**\n- [Section #17 - LockUserCommand Has No Invariant Validation + No Audit of Who Locked](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#17-lockusercommand-has-no-invariant-validation--no-audit-of-who-locked)",
+          "number": 7,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] LockUserCommand invariant validation + audit fields (CreatedBy/UpdatedBy/LockedBy)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/7"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZZk",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "status": "Backlog",
+        "title": "[Tech] LockUserCommand invariant validation + audit fields (CreatedBy/UpdatedBy/LockedBy)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "## Task\n`CancellationToken` is silently dropped in every repository method (signature lies); `UpdateProfileCommand` has a create-on-first-update upsert that races and has divergent profile creation between UpdateProfile and UploadAvatar. Two related issues.\n\n## Details\n**(a)** `src/TSQR.Identity.Infrastructure/Repositories/ProfileRepository.cs:9-13` (and every other repo method):\n```csharp\npublic async Task<UserProfile?> GetByIdAsync(string userId, CancellationToken ct = default)\n{\n    return await uow.Connection.QuerySingleOrDefaultAsync<UserProfile>(\n        \"SELECT * FROM user_profiles WHERE Id = @Id\", new { Id = userId });\n    // ct never referenced; DapperConnection.QuerySingleOrDefaultAsync overloads don't even accept CancellationToken\n}\n```\nA client disconnect on `GET /api/users` (unbounded \u2014 audit \u00a721) cannot cancel the in-flight query; the worker thread + DB connection stay pinned.\n\n**(b)** `UpdateProfileCommand.cs:12-33` \u2014 create-on-first-update upsert:\n- No factory: profile created via avatar upload has null `FirstName`/`LastName`/`Bio`; one created via profile update has null `AvatarUrl`.\n- Race condition: two concurrent `PUT /api/profile` calls both see `null`, both `INSERT`; second throws a PK violation (no `ON CONFLICT`).\n- No `UserProfileCreated` event: downstream consumers (welcome email, community default-role assignment) have no signal.\n- `CreatedAt` becomes \"first time the user happened to update their profile\", not actual account-creation time.\n\n## Affected Files\n- `src/TSQR.Identity.Infrastructure/Dapper/DapperConnection.cs` (add `CancellationToken` to method overloads)\n- All `*Repository.cs` (forward `ct` to Dapper's `QueryAsync<T>(..., cancellationToken)` overloads)\n- `src/TSQR.Identity.Application/Commands/Profile/UpdateProfileCommand.cs` (replace create-if-missing with a dedicated `CreateUserProfileCommand` or `UserRegistered` integration event consumer)\n- `src/TSQR.Identity.Infrastructure/Repositories/ProfileRepository.cs` (`CreateAsync` \u2014 use `INSERT ... ON CONFLICT (Id) DO NOTHING`)\n\n## Suggested Approach\n1. Update `ISqlConnection` methods to accept `CancellationToken`; thread through every repo call.\n2. Replace \"create-if-missing\" with a dedicated `CreateUserProfileCommand` (or consume a `UserRegistered` integration event from autheo when cross-context events exist).\n3. Add a `UserProfile.Create(...)` factory enforcing invariants.\n4. Switch `ProfileRepository.CreateAsync` to `INSERT ... ON CONFLICT (Id) DO NOTHING` to make the race benign.\n\n**Source:**\n- [Section #18 - CancellationToken Silently Dropped + Upsert Race on UpdateProfile](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#18-cancellation-silently-dropped--upsert-race-on-updateprofile)",
+          "number": 8,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Forward CancellationToken through repos + fix upsert race on UpdateProfile",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/8"
+        },
+        "estimate(SP)": 3,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZaI",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "status": "Backlog",
+        "title": "[Tech] Forward CancellationToken through repos + fix upsert race on UpdateProfile"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ec87525b",
+          "startDate": "2027-01-08",
+          "title": "Sprint 14"
+        },
+        "content": {
+          "body": "## Task\n`Role` is a label, not a capability. Introduce permissions and replace string-role authorization across all six microservices.\n\n## Details\n- `src/TSQR.Identity.Domain/Entities/Role.cs:3-7`:\n  ```csharp\n  public sealed class Role\n  {\n      public string Id { get; set; } = string.Empty;\n      public string Name { get; set; } = string.Empty;\n      public string NormalizedName { get; set; } = string.Empty;\n  }\n  ```\n- Authorization is enforced entirely by string literals at the controller boundary: `[Authorize(Roles = \"Admin\")]` (tool-lib, communities, identity), `[Authorize(Roles = \"Admin,LocationCoordinator,Repairman,Regular\")]` (~20 sites). Adding a new permission requires editing the string literal in every controller.\n- Roles are duplicated between the SQL seed (`05-identity.sql:42-46`), the JWT claims issued by autheo, and the controller attributes \u2014 nothing keeps them in sync.\n- `src/TSQR.Identity.Infrastructure/Repositories/RoleRepository.cs:28-31` \u2014 `DeleteAsync` is dead code with FK crash risk. `05-identity.sql:21-25` declares `user_roles.RoleId REFERENCES roles(Id)` with no `ON DELETE CASCADE`; deleting a role still held by any user throws a raw FK violation rather than a `RoleInUseError`.\n\n## Affected Files\n- `src/TSQR.Identity.Domain/Entities/Role.cs` (add `Permissions` collection)\n- New `src/TSQR.Identity.Domain/ValueObjects/Permission.cs`\n- New `roles_permissions` table in `05-identity.sql`\n- Replace `[Authorize(Roles = \"...\")]` with `[Authorize(Policy = \"...\")]` across all six microservices (~20 sites)\n- `src/TSQR.Identity.Domain/Repositories/IRoleRepository.cs` (remove or guard `DeleteAsync`)\n\n## Suggested Approach\n1. Model `Permission` as a value object (`Permission.CanLockUsers`, etc.); give `Role` a `permissions` table or JSON column.\n2. Replace `[Authorize(Roles = \"Admin\")]` with policy-based `[Authorize(Policy = \"CanLockUsers\")]` that checks the user's resolved permission set (probably via a custom `IAuthorizationHandler`).\n3. Soft-delete roles rather than hard-delete per v1 \u00a725; `DeleteRole` should check for active assignments first and return `RoleInUseError` if any exist.\n\n**Source:**\n- [Section #19 - Role Has No Permission Model + String-Role Authorization](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#19-role-has-no-permission-model--string-role-authorization)",
+          "number": 9,
+          "repository": "lstbob/tsqr-identity",
+          "title": "[Tech] Role has no Permission model + policy-based authorization",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-identity/issues/9"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZa8",
+        "labels": [
+          "tech-debt",
+          "audit-v2"
+        ],
+        "priority": "P2",
+        "repository": "https://github.com/lstbob/tsqr-identity",
+        "status": "Backlog",
+        "title": "[Tech] Role has no Permission model + policy-based authorization"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nThree Critical security/functional bugs: anonymous `/register` accepts client-chosen `Role`; `ForgotPassword`/`ResetPassword` never commit AND the `PasswordResetTokens` table doesn't exist; `RevokedReasonIsReuse` is computed in memory but never persisted (column missing).\n\n## Details\n**(a) Self-Admin via `/register`:** `AuthController.cs:28-46`:\n```csharp\n[HttpPost(\"register\"), AllowAnonymous]\npublic async Task<IActionResult> Register(RegisterRequest req, ...) {\n    RoleName? role = null;\n    if (!string.IsNullOrEmpty(req.Role) && Enum.TryParse<RoleName>(req.Role, true, out var r))\n        role = r;\n    var result = await register.ExecuteAsync(new RegisterCommand(req.Email, req.Password, ..., role, ...), ...);\n}\n// RegisterHandler.cs:29\nvar role = cmd.Role ?? RoleName.Regular;\nvar user = User.Create(..., role, cmd.MemberId);\n```\nAny unauthenticated caller can POST `{\"role\":\"Admin\"}` and become Admin.\n\n**(b) ForgotPassword/ResetPassword never commit + missing table:** `ForgotPasswordHandler.cs:11-29`, `ResetPasswordHandler.cs:13-39`:\n```csharp\npublic sealed class ForgotPasswordHandler(\n    IUserRepository userRepo,\n    IPasswordResetTokenRepository tokenRepo)        // no IUnitOfWork\n{\n    public async Task<Result> ExecuteAsync(...) {\n        ...\n        await tokenRepo.AddAsync(resetToken, ct);\n        return Result.Success();   // never committed\n    }\n}\n```\n`infra/init.sql:1-44` declares only `Users` and `RefreshTokens` \u2014 no `PasswordResetTokens` table. Repository queries throw `PostgresException: relation \"passwordresettokens\" does not exist`. Endpoint hard-crashes (caught by `ExceptionHandlingMiddleware` \u2192 500). \"User enumeration prevention\" (audit Good #7) returns 200 on unknown email, masking that the feature is dead.\n\n**(c) `RevokedReasonIsReuse` computed but not persisted:** `RefreshToken.cs:17,65-70` sets the flag in the aggregate; `RefreshTokenRepository.cs:42-57` UPDATE omits `RevokedReasonIsReuse`; `infra/init.sql` doesn't declare the column. The audit praiseworthy \"family-revocation pattern\" cannot record *why* a revocation happened \u2014 the security-anomaly audit trail is fictional.\n\n## Affected Files\n- `src/TSQR.Autheo.WebApi/Controllers/AuthController.cs:28-46` (drop `Role` from public `RegisterRequest`)\n- `src/TSQR.Autheo.Application/Commands/RegisterHandler.cs:29` (force `RoleName.Regular` for public registrations)\n- `src/TSQR.Autheo.Application/Commands/ForgotPasswordHandler.cs` / `ResetPasswordHandler.cs` (inject `IUnitOfWork`; `await uow.SaveChangesAsync(ct)` at the end)\n- `infra/init.sql` (add `PasswordResetTokens` table with `TokenHash VARCHAR(128) NOT NULL UNIQUE` + `RevokedReasonIsReuse BOOLEAN NULL` column on `RefreshTokens`)\n- `src/TSQR.Autheo.Infrastructure/Dapper/Repositories/RefreshTokenRepository.cs:42-57` (include `RevokedReasonIsReuse` in SELECT / INSERT / UPDATE)\n- `RefreshToken.Rehydrate` (hydrate the column on read)\n\n## Suggested Approach\n1. Strip `Role` from `RegisterRequest`; force `RoleName.Regular` in `RegisterHandler`. Role elevation is only via a future admin-only endpoint.\n2. Inject `IUnitOfWork` into both password-reset handlers; commit at the end.\n3. Add `PasswordResetTokens` table to `init.sql`; match the schema in `PasswordResetTokenRepository`.\n4. Add `RevokedReasonIsReuse BOOLEAN NULL` column to `RefreshTokens`; include in SELECT/INSERT/UPDATE; hydrate in `RefreshToken.Rehydrate`.\n5. Wire an email-sender (currently reset tokens are minted, hashed, and never delivered to anyone).\n\n**Source:**\n- [Section #20 - /register Self-Admin + Broken ForgotPassword/ResetPassword + RevokedReasonIsReuse Not Persisted](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#20-register-self-admin--broken-forgotpasswordresetpassword--revokedreasonisreuse-not-persisted)",
+          "number": 3,
+          "repository": "lstbob/tsqr-autheo",
+          "title": "[Tech] /register self-Admin exploit + broken password reset + persist RevokedReasonIsReuse",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-autheo/issues/3"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZbs",
+        "labels": [
+          "bug",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-autheo",
+        "status": "Backlog",
+        "title": "[Tech] /register self-Admin exploit + broken password reset + persist RevokedReasonIsReuse"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nTwo Critical issues: concurrent refresh-token rotation has no optimistic lock, allowing the family chain to fork and defeating reuse detection; `Revoke` on an already-revoked token overwrites `RevokedAt`/`RevokedByIp`, destroying the audit trail.\n\n## Details\n**(a)** `RefreshHandler.cs:17-61`, `RefreshTokenRepository.cs:42-57`:\n```csharp\nvar existing = await refreshRepo.GetByTokenHashAsync(tokenHash, ct);\nif (existing.RevokedAt is not null) { ... }\nif (!existing.IsActive) { ... }\n// No lock between the check and Rotate below\nvar replacement = existing.Rotate(...);\nawait refreshRepo.AddAsync(replacement, ct);\nrefreshRepo.Update(existing);   // UPDATE RefreshTokens SET ReplacedByTokenHash=... WHERE Id=@Id\nawait uow.SaveChangesAsync(ct);\n```\nThe UPDATE has no `xmin` / `RowVersion` / `ReplacedByTokenHash IS NULL` predicate; `ReplacedByTokenHash` is not declared `UNIQUE`. Two concurrent refresh calls with the same parent both pass the `IsActive` check, both `Rotate`, both insert a different replacement, both update the parent \u2014 last write wins, leaving one replacement orphaned and the family chain forked. From then on, reuse detection walks a single lineage and silently ignores the orphan branch.\n\n**(b)** `RefreshToken.cs:65-70`, `RefreshHandler.cs:30-35` \u2014 `Revoke` always overwrites `RevokedAt`/`RevokedByIp`:\n```csharp\npublic void Revoke(string? byIp = null, bool reuseDetected = false) {\n    RevokedAt = DateTime.UtcNow;          // always overwrites\n    RevokedByIp = byIp ?? \"unknown\";      // always overwrites\n}\n// RefreshHandler reuse branch:\nif (existing.RevokedAt is not null) {\n    existing.Revoke(cmd.ClientIp, reuseDetected: true);  // re-revokes an already-revoked token\n}\n```\nWhen reuse is detected, the original (already-rotated, already-revoked) token's `RevokedAt` (legitimate rotation time) and `RevokedByIp` (legitimate client IP) are overwritten with the attacker's IP and the current timestamp. The exact data needed for incident forensics is destroyed.\n\n## Affected Files\n- `src/TSQR.Autheo.Infrastructure/Dapper/Repositories/RefreshTokenRepository.cs:42-57`\n- `src/TSQR.Autheo.Domain/Aggregates/RefreshTokenAggregate/RefreshToken.cs:65-70`\n- `src/TSQR.Autheo.Application/Commands/RefreshHandler.cs:17-61`\n- `infra/init.sql` (declare `UNIQUE` on `RefreshTokens.ReplacedByTokenHash`)\n\n## Suggested Approach\n1. Add `WHERE Id = @Id AND ReplacedByTokenHash IS NULL` to the parent-token UPDATE; capture affected rows; on 0-affected, treat as concurrent rotation \u2192 trigger reuse detection and revoke the family.\n2. Guard `RefreshToken.Revoke`: if `RevokedAt is not null`, only update `RevokedReasonIsReuse = true` (do NOT overwrite `RevokedAt`/`RevokedByIp`).\n3. Add `UNIQUE` on `RefreshTokens.ReplacedByTokenHash` (partial, where not null).\n4. Add a unit test simulating concurrent refresh calls and verifying the family chain cannot fork.\n\n**Source:**\n- [Section #21 - Concurrent Refresh Token Rotation Has No Optimistic Lock + Revoke Overwrites Audit](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#21-concurrent-refresh-token-rotation-has-no-optimistic-lock--revoke-overwrites-audit)",
+          "number": 4,
+          "repository": "lstbob/tsqr-autheo",
+          "title": "[Tech] Refresh token optimistic concurrency + guard Revoke against double-revocation",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-autheo/issues/4"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZcg",
+        "labels": [
+          "bug",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-autheo",
+        "status": "Backlog",
+        "title": "[Tech] Refresh token optimistic concurrency + guard Revoke against double-revocation"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9b1885dc",
+          "startDate": "2027-03-05",
+          "title": "Sprint 18"
+        },
+        "content": {
+          "body": "## Task\nThree related hardening gaps: no rate limiting on auth endpoints; single static HMAC signing key shared across 7 services with no per-service audience (any container compromise \u2192 forge tokens for every service).\n\n## Details\n**(a)** `src/TSQR.Autheo.WebApi/Program.cs:15-87` \u2014 no `AddRateLimiter`/`UseRateLimiter`; no `[EnableRateLimiting]`. Auth endpoints are textbook brute-force / credential-stuffing / token-spray targets. The praised \"user enumeration prevention\" returns 200 on unknown email \u2014 but without rate limiting, an attacker mass-enumerates unthrottled. `/login` is bounded only by PBKDF2 cost (~50-200 ms/core).\n\n**(b)** `src/TSQR.Autheo.Application/Services/IJwtTokenService.cs:30-57`, `Program.cs:20`, all six other services use the same `JWT_KEY`:\n- `tsqr-deploy/.env.example:32-35` \u2014 one `JWT_KEY` variable\n- All consumers use `Issuer=\"tsqr-autheo\"`, `Audience=\"tsqr-services\"`\n- Symmetric signing means **every verifier** holds the secret. Compromise *any* one of the seven containers and an attacker can forge tokens for every service.\n- No `kid` header, no key rotation, no vault integration (Vault / AWS Secrets), no per-service audience (`aud=tsqr-tool-lib`, `aud=tsqr-identity`, etc.).\n\nSymmetric-key tokens issued for autheo are equivalently valid for tool-lib, identity, and every other context.\n\n## Affected Files\n- `src/TSQR.Autheo.WebApi/Program.cs` (add `AddRateLimiter` with per-IP fixed-window policies on `/login`, `/forgot-password`, `/register`)\n- `src/TSQR.Autheo.Application/Services/IJwtTokenService.cs` (issue `kid` header, support key ring, asymmetric `RS256`)\n- `.env.example`, `appsettings.json` across all services (per-service `Audience` and per-service signing keys)\n- Each downstream service's `Program.cs` (validate per-service audience; load public key from a secret/JWKS endpoint)\n\n## Suggested Approach\n1. Add `AddRateLimiter` with per-IP fixed-window policies (`/login` 5/min/IP, `/forgot-password` 3/min/IP, `/register` 5/hour/IP).\n2. Move to asymmetric `RS256`: autheo holds the private key; every verifier holds only the public key. Issue a `kid` header and resolve `IssuerSigningKey` from a key-ring (JWKS endpoint).\n3. Add per-service audience (`aud=tsqr-tool-lib`, `aud=tsqr-identity`, ...) and validate accordingly in each downstream `Program.cs`.\n4. Store the JWT signing private key as a mounted Kubernetes Secret / Docker Swarm secret, not in an env var.\n5. Validate key length and base64 payload at config bind time (currently only throws when the first token is issued).\n\n**Source:**\n- [Section #22 - No Rate Limiting + Single Static JWT Signing Key + Single Audience Across 7 Services](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#22-no-rate-limiting--single-static-jwt-signing-key--single-audience-across-7-services)",
+          "number": 5,
+          "repository": "lstbob/tsqr-autheo",
+          "title": "[Tech] Rate limiting + asymmetric JWT signing (RS256) + per-service audience",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-autheo/issues/5"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZdY",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-autheo",
+        "status": "Backlog",
+        "title": "[Tech] Rate limiting + asymmetric JWT signing (RS256) + per-service audience"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "a350a0d6",
+          "startDate": "2027-02-05",
+          "title": "Sprint 16"
+        },
+        "content": {
+          "body": "## Task\nThe `mbr` JWT claim is undocumented, unconsumed by any service, and type-mismatched (`Guid` in autheo vs `int` in tool-lib/soup-kitchen). Document and enforce the contract (or eliminate the claim \u2014 see options below).\n\n## Details\n- `src/TSQR.Autheo.Application/Services/IJwtTokenService.cs:45`:\n  ```csharp\n  new Claim(\"mbr\", user.MemberId?.ToString() ?? \"\"),\n  ```\n- `src/TSQR.Autheo.Domain/Aggregates/UserAggregate/User.cs:9` \u2014 `public Guid? MemberId { get; private set; }` (so `mbr` is empty string OR a `Guid` string).\n- `tsqr-deploy/infra/03-autheo.sql:10` \u2014 `MemberId UUID NULL`.\n- `tsqr-tool-lib/.../MemberId.cs` \u2014 `MemberId` wraps **`int`**, not `Guid`.\n- `tsqr-soup-kitchen/.../VolunteerAggregate/Volunteer.cs:6` \u2014 `public int MemberId { get; private set; }`.\n- `grep -rn '\"mbr\"|FindFirstValue'` across all TSQR `src/` \u2014 **no consumer reads the `mbr` claim at all** (only the issuer writes it). Identity, tool-lib, soup-kitchen, communities, support all read `sub` and `ClaimTypes.NameIdentifier` only.\n\nThe audit's \"Good #6\" claim that `mbr` links `User` to `Member` is fictional in production:\n- No consumer reads the claim \u2192 enforced link = 0\n- Value types are incompatible (`Guid?` vs `int`)\n- The contract is nowhere documented\n- The empty-string fallback (`?? \"\"`) lets unauthenticated-looking claims slip through\n\nA future contributor will assume `mbr` is the member identifier and consume garbage.\n\n## Affected Files\n- `src/TSQR.Autheo.Application/Services/IJwtTokenService.cs:45` (drop `?? \"\"`; conditionally add the claim only when `MemberId.HasValue`)\n- New `TSQR.Common.Identity` shared `MemberId` value object (resolves type mismatch with tool-lib/soup-kitchen) OR adoption of \"MemberId == User.Id == Sub\" single identity\n- `tsqr-deploy/infra/03-autheo.sql:10` (if eliminating the claim, alter `MemberId UUID NULL` to drop it; if keeping, change type to `INTEGER` and align with siblings)\n- `src/TSQR.Gateway.Api/Program.cs` (add `RequireClaim(\"mbr\")` policy for member-scoped routes)\n- Cross-context \u2014 add contract test in a new `tsqr-contracts` repo (post-MVP)\n\n## Suggested Approach\n- **Option (a) \u2014 eliminate the claim:** Decide `MemberId == User.Id == Sub` (single identity). Drop the `mbr` claim and the `Users.MemberId` column. Each downstream service uses `sub` as the member identifier.\n- **Option (b) \u2014 keep the split, enforce it (preferred):** Standardize on a typed `MemberId : ValueObject` in `TSQR.Common` shared across all repos; document the claim contract (`mbr` is a string-encoded `MemberId`, required when `role \u2208 {Regular, Repairman, Coordinator, Admin}`); add an authorization policy at the gateway AND in each service's `[Authorize(Policy=\"HasMember\")]` middleware. The empty-string fallback (`?? \"\"`) must be removed (conditionally omit the claim instead).\n\nEither way, add a contract test in a new `tsqr-contracts` repo.\n\n**Source:**\n- [Section #29 - `mbr` JWT Claim Undocumented, Unconsumed, Type-Mismatched Across Contexts](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#29-mbr-jwt-claim-undocumented-unconsumed-type-mismatched-across-contexts)",
+          "number": 6,
+          "repository": "lstbob/tsqr-autheo",
+          "title": "[Tech] Document + enforce `mbr` JWT claim contract across all TSQR services",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-autheo/issues/6"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZeA",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-autheo",
+        "status": "Backlog",
+        "title": "[Tech] Document + enforce `mbr` JWT claim contract across all TSQR services"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nThree Critical bugs: anonymous ticket submission; no `CommunityId` on tickets; `SubmitTicketCommand.SubmitDate` is silently passed into the `submitterEmail` repository parameter (every ticket has `SubmitterEmail = NULL`).\n\n## Details\n**(a) Authorization:** `Controllers/Controllers.cs:61-82`:\n```csharp\n[HttpPost]\n[AllowAnonymous]                                                          // anyone can submit\npublic async Task<IActionResult> Submit(SubmitTicketRequest req, ...) { ... }\n\n[HttpPatch(\"{id}\")]\n[Authorize]                                                                // any authenticated user can resolve ANY ticket\npublic async Task<IActionResult> Update(int id, UpdateTicketStatusRequest req, ...) { ... }\n```\nThe only claim read from the JWT is `sub`. No role check on `Update` \u2014 a Regular user can resolve or reassign any tenant's ticket.\n\n**(b) Not multi-tenant:** `infra/init.sql:30-42` \u2014 `Tickets` has no `CommunityId`; uses `SubmitterMemberId UUID` while every other context uses `int MemberId`. Type mismatch (cf. audit \u00a720) breaks future cross-context joins. `GET /api/tickets` returns all communities' tickets with no scoping.\n\n**(c) Field-mismatch bug (silent data-loss):** `Commands/Commands.cs:5,19-20`, `Controllers/Controllers.cs:69`, `ITicketsRepository.cs:5`:\n```csharp\npublic record SubmitTicketCommand(string Subject, int Category, string Description,\n                                  string? SubmitDate, string? SubmitterMemberId);\n// handler passes cmd.SubmitDate as the repo's submitterEmail parameter:\nvar id = await tickets.CreateTicketAsync(cmd.Subject.Trim(), cmd.Category, cmd.Description.Trim(),\n    cmd.SubmitDate,    // <-- positional argument \u2014 treated as submitterEmail\n    cmd.SubmitterMemberId, null);\n// ITicketsRepository signature:\nTask<int> CreateTicketAsync(string subject, int category, string description,\n    string? submitterEmail, string? submitterMemberId, string? assignedTo);\n```\nThe 4th positional arg is named `SubmitDate` but is typed `string?` and passed into the repo's `submitterEmail` parameter. Stats / handlers reading `SubmitterEmail` get NULL forever. Textbook primitive-obsession bug that a `Ticket` aggregate would prevent at the compiler level.\n\n## Affected Files\n- `src/TSQR.Support.WebApi/Controllers/Controllers.cs` (remove `[AllowAnonymous]` from `Submit`; add `[Authorize(Policy = \"SupportStaff\")]` to `Update`)\n- `infra/init.sql` (add `CommunityId INTEGER NOT NULL` to `Tickets` and `Incidents`)\n- All read queries in `src/TSQR.Support.Infrastructure/.../*.cs` (add `WHERE CommunityId = @CommunityId`)\n- `src/TSQR.Support.Application/Commands/Commands.cs` `SubmitTicketCommand` (rename `SubmitDate` \u2192 `SubmitterEmail`; controller populates from JWT `email` claim)\n- `src/TSQR.Support.Domain/ITicketsRepository.cs` (same rename for clarity)\n- Long-term: introduce a `Ticket` aggregate replacing the positional-primitive repo method (overlap with #6)\n\n## Suggested Approach\n1. Authentication: deny anonymous on `Submit`; enforce staff policy on `Update`.\n2. Add `CommunityId` to `Tickets` and `Incidents`; scope all queries.\n3. Rename the command field `SubmitDate` \u2192 `SubmitterEmail`; controller populates from JWT `email` claim.\n4. Switch `SubmitterMemberId` from `UUID` to `INTEGER` to align with other contexts (or adopt `MemberId == User.Id == Sub` per tsqr-autheo#6).\n5. Long-term: model a `Ticket` aggregate to make the field-mismatch impossible.\n\n**Source:**\n- [Section #23 - Anonymous Ticket Submission + No Multi-Tenancy + Critical Field-Mismatch Bug](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#23-anonymous-ticket-submission--no-multi-tenancy--critical-field-mismatch-bug)",
+          "number": 5,
+          "repository": "lstbob/tsqr-support",
+          "title": "[Tech] Ticket submission auth + multi-tenancy + critical field-mismatch bug",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-support/issues/5"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZe4",
+        "labels": [
+          "bug",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-support",
+        "status": "Backlog",
+        "title": "[Tech] Ticket submission auth + multi-tenancy + critical field-mismatch bug"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "9b1885dc",
+          "startDate": "2027-03-05",
+          "title": "Sprint 18"
+        },
+        "content": {
+          "body": "## Task\nMultiple cohesive domain-model gaps in one refactor: ticket state machine unenforced (and `ResolvedAt` never cleared on reopen); `Incident` aggregate effectively dead (only seed rows exist); no `Comments`/`Attachments` aggregation; `ListTicketsAsync` has hardcoded `LIMIT 50` with no offset \u2192 older tickets unreachable; no audit-trail columns (`ResolvedBy`, `ClosedBy`).\n\n## Details\n**(a) Ticket state machine unenforced:** `TicketsRepository.cs:27-37`:\n```csharp\n@\"UPDATE Tickets\n     SET Status = @Status,\n         AssignedTo = COALESCE(@AssignedTo, AssignedTo),\n         ResolvedAt = CASE WHEN @Status = 3 THEN now() ELSE ResolvedAt END\n   WHERE Id = @Id\"\n```\n`Resolved \u2192 Open` is silently allowed (no transition guard); `ResolvedAt` is left in place after reopen \u2192 inconsistent state. `COALESCE(@AssignedTo, AssignedTo)` cannot distinguish \"preserve assignment\" from \"clear\" \u2014 an agent cannot unassign a ticket. The documented state machine (audit \u00a714) is `New / Assigned / Resolved / Closed / Reopened`; the actual enum has only `Open / InProgress / Resolved`.\n\n**(b) `Incident` aggregate effectively dead:** `ISupportQueries.cs:7` has `ListIncidentsAsync` (read-only). No command handler, no repo write path. `Enums.cs:17-22` defines `IncidentStatus { Investigating, Ongoing, Resolved }` but **nothing ever instantiates Investigating or Ongoing** \u2014 seed data is all Resolved. There's no way for an operator to declare \"Notification Service is Down \u2014 investigating,\" so the public status page is permanently stale.\n\n**(c) No Comments / Attachments aggregation:** `init.sql:45-52` only defines `ContactMessages`; `SubmitContactHandler` (`Commands.cs:60-61`) creates the ticket AND the initial message in the same tx. There's no endpoint to add follow-up messages, no `Comments` table, no attachment table.\n\n**(d) Hardcoded `LIMIT 50`:** `SupportQueries.cs:35-37`:\n```csharp\nif (status is > 0) sql += \" WHERE Status = @Status\";\nelse if (recent)   sql += \" WHERE Status IN (1, 2)\";\nsql += \" ORDER BY ReportedAt DESC LIMIT 50\";    // page 2+ impossible\n```\nOnly `ListTicketsAsync` is bounded, but with no `OFFSET`. All other list queries (`ListIncidentsAsync`, `ListAppsAsync`, `ListServiceStatusesAsync`) are unbounded. Older tickets are unreachable via the API.\n\n**(e) No audit columns:** `Tickets` table has no `ResolvedBy`, `ClosedBy`, `LastModifiedAt`, `LastModifiedBy`. Support tickets are compliance-sensitive (who handled a member's access-issue ticket?); the operation log is gone at the moment of action, not just on delete.\n\n## Affected Files\n- New `src/TSQR.Support.Domain/Aggregates/TicketAggregate/Ticket.cs` aggregate with `Resolve(actor)`, `Reopen(actor)`, `AssignTo(agent)`, `Unassign()`\n- `TicketsRepository.cs` (clear `ResolvedAt` on reopen; distinct params for assign vs. unassign)\n- New `Incident` aggregate with `Investigate()` / `MarkOngoing()` / `Resolve()` + event raises\n- New `Comment` / `Attachment` child entities inside `Ticket` with size/MIME invariants\n- `ISupportQueries` (add `page` / `pageSize` parameters to `ListTicketsAsync` and `ListIncidentsAsync`)\n- `infra/init.sql` (add `ResolvedBy`, `ClosedBy`, `LastModifiedAt`, `LastModifiedBy`, `CommunityId`, soft-delete columns per v1 \u00a725)\n- New magic-int-to-enum mapping at repository boundary (lint audit \u00a719)\n\n## Suggested Approach\n1. Encapsulate state transitions on a `Ticket` aggregate; clear `ResolvedAt` on reopen; reject `Resolved \u2192 Open` only via an explicit `Reopen` method.\n2. Add a real `Incident` aggregate with `Investigate`/`MarkOngoing`/`Resolve` + handlers + DI registrations + endpoint.\n3. Add `Comment`/`Attachment` child entities inside `Ticket` with `AddComment(author, body)` / `AddAttachment(fileSize, mime, blobUri)` invariants.\n4. Add `page`/`pageSize` to `ListTicketsQuery` / `ListIncidentsQuery`; default page 1, size 50.\n5. Add `ResolvedBy` / `ClosedBy` / `LastModifiedAt` / `LastModifiedBy` audit columns; soft-delete per v1 \u00a725.\n\n**Source:**\n- [Section #24 - Ticket State Machine Unenforced + Dead Incident Aggregate + No Comments/Attachments + Hardcoded LIMIT 50](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#24-ticket-state-machine-unenforced--dead-incident-aggregate--no-commentsattachments--hardcoded-limit-50)",
+          "number": 6,
+          "repository": "lstbob/tsqr-support",
+          "title": "[Tech] Ticket state machine + Incident aggregate + Comments/Attachments + pagination",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-support/issues/6"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZfk",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-support",
+        "status": "Backlog",
+        "title": "[Tech] Ticket state machine + Incident aggregate + Comments/Attachments + pagination"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ac805860",
+          "startDate": "2026-12-11",
+          "title": "Sprint 12"
+        },
+        "content": {
+          "body": "## Task\n`TSQR.Common` currently has only `Errors/`, `Results/`, `Interactors/`, `Extensions/`. Each bounded context forks its own copy of `Entity`, `ValueObject`, `IAggregateRoot`, `IDomainEvent` \u2014 four divergent semantics for entity equality and \"what an aggregate root means\". Move them into the shared kernel and delete the four homegrown copies.\n\n## Details\n| Repo | File | Lines | Notes |\n|---|---|---|---|\n| tool-lib | `Domain/{Entity,ValueObject,IAggregateRoot}.cs` | 115+82+5 | Includes the `TestAsnc()` debug leak (v1 \u00a74) |\n| communities | `Domain/{Entity,ValueObject,IAggregateRoot}.cs` | 22 | `Equals` omits `GetType` check |\n| soup-kitchen | `Domain/{Entity,ValueObject,IAggregateRoot}.cs` | ~30 | Different `Equals` shape |\n| autheo | `Domain/Entity.cs` | 11 | No `DomainEvents` collection; `Id` has a public setter; no `ValueObject` constraint on `TId`; no `Equals`/`GetHashCode` override |\n\n```csharp\n// autheo's Entity<TId> (11 lines, completely divergent):\npublic abstract class Entity<TId> where TId : notnull\n{\n    public TId Id { get; protected set; } = default!;\n}\n```\n\nA future aggregate wanting to integrate with the `DomainEventOrchestrator` from tool-lib has no `DomainEvents` collection available in autheo's variant. Autheo's `Entity<TId>.Id` having a public setter contradicts the immutable-identity pattern tool-lib enforces.\n\n## Affected Files\n- New `TSQR.Common.DomainKernel` namespace / project under tsqr-common (`Entity`, `Entity<TId>`, `ValueObject`, `IAggregateRoot`, `IDomainEvent`, optionally `IId<T>` wrapper)\n- Delete four homegrown `Entity.cs` / `ValueObject.cs` / `IAggregateRoot.cs` copies across the four repos\n- Reconcile `Equals` implementations (tool-lib's variant is the strongest; adopt it, deleting the others)\n- New contract tests in tsqr-common asserting common equality / domain-event semantics\n\n## Suggested Approach\n1. In tsqr-common, create `TSQR.Common.DomainKernel` namespace / project with the canonical `Entity`, `Entity<TId>`, `ValueObject`, `IAggregateRoot`, `IDomainEvent` types (adapt tool-lib's variants \u2014 they're the most rigorous).\n2. Each microservice's `Domain` project references it; delete the four homegrown copies.\n3. Add contract tests in tsqr-common that compile against the shared types and assert identity equality / domain-event collection behavior.\n4. Coordinate with tsqr-identity#6 (applying `IAggregateRoot` to `UserProfile`/`Role`) \u2014 if both land, identity should consume the shared types.\n\n**Source:**\n- [Section #25 - Shared Kernel (tsqr-common) Is Anemic; DDD Base Classes Copy-Pasted in 4 Contexts](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#25-shared-kernel-tsqr-common-is-anemic-ddd-base-classes-copy-pasted-in-4-contexts)",
+          "number": 2,
+          "repository": "lstbob/tsqr-common",
+          "title": "[Tech] Shared kernel: move DDD base classes (Entity<TId>, ValueObject, IAggregateRoot, IDomainEvent) into tsqr-common",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-common/issues/2"
+        },
+        "estimate(SP)": 13,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZgY",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-common",
+        "status": "Backlog",
+        "title": "[Tech] Shared kernel: move DDD base classes (Entity<TId>, ValueObject, IAggregateRoot, IDomainEvent) into tsqr-common"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ac805860",
+          "startDate": "2026-12-11",
+          "title": "Sprint 12"
+        },
+        "content": {
+          "body": "## Task\nSix copies of bespoke `ErrorResponse` factory / `ExceptionHandlingMiddleware` / `Program.cs` hosting defaults across the 6 backends; identity's `Program.cs` has silently drifted (no FallbackPolicy, no HttpsRedirect, no ExceptionMiddleware, no OpenAPI). No structured logging, tracing, or correlation ID propagation anywhere. Publish a `TSQR.Common.WebApi` NuGet/syslib that collapses all of this into one `builder.AddTsqrApiDefaults()` extension.\n\n## Details\n- Six `Program.cs` files register an identical custom `InvalidModelStateResponseFactory` returning a bespoke `ErrorResponse(code, message)` JSON (no RFC 7807 ProblemDetails, no `traceId` correlation). The factory picks only the *first* model-state error, swallowing subsequent validation failures.\n- `tsqr-identity/src/TSQR.Identity.Api/Program.cs:53-59` \u2014 diverges: no `FallbackPolicy`, no `UseHttpsRedirection`, no `UseMiddleware<ExceptionHandlingMiddleware>`, no `AddOpenApi`. The other five contexts all carry these (though each as a copy-paste drift source).\n- `grep -rln \"OpenTelemetry|CorrelationId|ActivitySource|UseW3C|Serilog\" /mnt/data/dev/tsqr-*` \u2192 zero matches. A single browser request to the gateway triggers four downstream calls; when one fails 1-in-100, there's no way to correlate logs.\n- `tsqr-gateway/src/TSQR.Gateway.Api/Program.cs:18-20` \u2014 `RequireHttpsMetadata = builder.Environment.IsDevelopment() ? false : false;` \u2014 dead-code ternary lying about configuration.\n- Health endpoints are shallow stubs across all services (`Ok(new { status = \"ok\" })`) \u2014 no DB / downstream dependency probes (`grep AddHealthChecks` \u2192 zero matches). Docker compose healthchecks report all services as healthy even if the DB is unreachable.\n\n## Affected Files\n- New `src/TSQR.Common.WebApi/` project in tsqr-common with `TsqrApiDefaultsServiceCollectionExtensions`, `TsqrWebAppExtensions`, default `ExceptionHandlingMiddleware`\n- All six `Program.cs` files accept the shared defaults and shrink to ~10 lines\n- All six `WebApi/Middleware/ExceptionHandlingMiddleware.cs` files \u2192 drop in favor of shared\n\n## Suggested Approach\nPublish `TSQR.Common.WebApi` package exposing `builder.AddTsqrApiDefaults()`:\n- JWT bearer with anonymous\u2192deny fallback (`AuthorizationPolicyBuilder().RequireAuthenticatedUser()`)\n- `ConfigureApiBehaviorOptions` for the `ErrorResponse` factory (or built-in `AddProblemDetails` \u2014 RFC 7807)\n- `UseHttpsRedirection`, `UseMiddleware<ExceptionHandlingMiddleware>`, OpenAPI in Development\n- `AddOpenTelemetry().WithTracing(t => t.AddAspNetCore().AddHttpClient().AddSource(\"TSQR.*\"))` + OTLP exporter\n- `AddHealthChecks().AddNpgSql(connectionString)` + `MapHealthChecks(\"/api/health\")` and `/api/health/ready` filtered to \"ready\" tag\n\nEach `Program.cs` becomes ~10 lines. Six divergent configurations collapse into one. Identity's drift becomes impossible to repeat.\n\n**Source:**\n- [Section #26 - Bespoke Error/Error MW/Hosting Defaults in Every Service \u2014 Need `TSQR.Common.WebApi`](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#26-bespoke-errorerrormwhosting-defaults-in-every-service--need-tsqrcommonwebapi)",
+          "number": 3,
+          "repository": "lstbob/tsqr-common",
+          "title": "[Tech] Publish `TSQR.Common.WebApi` shared hosting defaults (ProblemDetails, RateLimiter, OpenTelemetry, HealthChecks)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-common/issues/3"
+        },
+        "estimate(SP)": 5,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZhc",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-common",
+        "status": "Backlog",
+        "title": "[Tech] Publish `TSQR.Common.WebApi` shared hosting defaults (ProblemDetails, RateLimiter, OpenTelemetry, HealthChecks)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "f8517d3d",
+          "startDate": "2027-03-19",
+          "title": "Sprint 19"
+        },
+        "content": {
+          "body": "## Task\nCanonical `docker compose up` deployment of tool-lib breaks on first loan: `infra/02-tool-library.sql` is missing `Loans.LateFeePerDay`, `Loans.RenewalCount`, `Loans.CommunityId`, and the entire `Policies` table that were added to tool-lib's local `init.sql` by #33/#35.\n\n## Details\n- `infra/02-tool-library.sql:89-99` \u2014 `Loans` table has only `Id, MemberId, CheckoutDate, DueDate, ItemId, Status, ReturnedDate, FineAccrued`. No `LateFeePerDay`, no `RenewalCount`, no `CommunityId`.\n- `tsqr-tool-lib/src/.../docker/init.sql:101-115` \u2014 same table also has `LateFeePerDay NUMERIC(10,2) NOT NULL DEFAULT 1.00` and `RenewalCount INTEGER NOT NULL DEFAULT 0`.\n- `tsqr-tool-lib/src/.../Dapper/Mappings/LoanMapping.cs` INSERTs include `LateFeePerDay`, `RenewalCount`, `CommunityId` columns.\n- `tsqr-tool-lib/src/.../Dapper/Mappings/PolicyMapping.cs` reads/writes a `Policies` table; `infra/02-tool-library.sql` does NOT create it.\n- `infra/08-tool-library-community.sql` only ADDs `CommunityId`; there's no `10-tool-library-loans-latefee.sql` to retrofit `LateFeePerDay`/`RenewalCount`, and no `11-tool-library-policies.sql` to create the `Policies` table.\n\nFirst `Loans` INSERT will throw `Npgsql.PostgresException: 42703: column \"LateFeePerDay\" of relation \"Loans\" does not exist`. Same for any `Policies` query.\n\n## Affected Files\n- `tsqr-deploy/infra/02-tool-library.sql` (reconcile column lists with `tsqr-tool-lib/src/.../docker/init.sql`)\n- OR add new migration scripts `infra/10-tool-library-loans-latefee.sql`, `infra/11-tool-library-policies.sql` (ALTER / CREATE)\n\n## Suggested Approach\n1. Immediate patch: copy the `Loans` column lists and `Policies` table block from `tsqr-tool-lib/src/.../docker/init.sql` into `infra/02-tool-library.sql`.\n2. Reconcile the rest of the tables (verify `Manufacturers`, `Tools`, `InventoryItems`, `Members`, `Reservations`, `MaintenanceRecords`, `Locations`, `ToolScarcityByLocation` all match the local init.sql; fix any drift found).\n3. Long-term: this gap is the immediate symptom of `tsqr-deploy#3` \u2014 adopt a real migration runner so the two sources of truth can never drift again.\n\n**Source:**\n- [Section #27 - Deploy SQL Drifted from Local init.sql](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#27-deploy-sql-drifted-from-local-initsql--loanslatefeeperdayrenewalcountpolicies-table-missing)",
+          "number": 2,
+          "repository": "lstbob/tsqr-deploy",
+          "title": "[Tech] Reconcile `infra/02-tool-library.sql` with local init.sql (add Loans.LateFeePerDay/RenewalCount + Policies table)",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-deploy/issues/2"
+        },
+        "estimate(SP)": 2,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZiw",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P0",
+        "repository": "https://github.com/lstbob/tsqr-deploy",
+        "status": "Backlog",
+        "title": "[Tech] Reconcile `infra/02-tool-library.sql` with local init.sql (add Loans.LateFeePerDay/RenewalCount + Policies table)"
+      },
+      {
+        "bob-sprint": {
+          "duration": 14,
+          "iterationId": "ac805860",
+          "startDate": "2026-12-11",
+          "title": "Sprint 12"
+        },
+        "content": {
+          "body": "## Task\nNo DB migration framework: schema is \"set once, never modified\". The only way to add a column in production is `docker compose down -v && up --build` \u2014 wiping user data.\n\n## Details\n- `tsqr-deploy/docker-compose.yml:13-21` \u2014 Postgres `docker-entrypoint-initdb.d/` mount only runs when the data directory is empty (first `up -v`).\n- `tsqr-deploy/infra/02-tool-library.sql` through `09-*sql` run once via the entrypoint in alphabetical order.\n- `infra/08-tool-library-community.sql:6-11` and `09-soup-kitchen-community.sql:4-8` use **bare** `ALTER TABLE \u2026 ADD COLUMN` (no `IF NOT EXISTS`) \u2014 re-running fails because the column already exists.\n\n```sql\n-- 08-tool-library-community.sql\nALTER TABLE Members ADD COLUMN CommunityId INTEGER NOT NULL DEFAULT 1;\nALTER TABLE Tools    ADD COLUMN CommunityId INTEGER NOT NULL DEFAULT 1;\n-- (no IF NOT EXISTS, no migration_history table, no transaction wrapper)\n```\n\nThere's no ordered runner, no idempotency, no rollback, no version tracking table. #27 (Loans column drift) is the *direct* visible consequence: the tool-lib dev added a column to the local `init.sql` but had no migration-step mechanism to retroactively update existing deployments.\n\n## Affected Files\n- New `Migrations/` directory per service (or shared `tsqr-deploy/migrations/`)\n- Each service's `Program.cs` runs the migration tool against its connection string on startup\n- Existing `infra/0X-*.sql` files become the baseline (run-once seed/init), wrapped in `IF NOT EXISTS` or migrated into numbered scripts\n\n## Suggested Approach\nAdopt [DbUp](https://dbup.readthedocs.io/) or FluentMigrator:\n1. Each service references a `Migrations/` SQL directory ordered by `YYYYMMDDHHmm_*.sql` filename.\n2. On startup, the service runs `DbUp.Builder.Build().Upgrade()` against its connection string, recording applied scripts in a `_SchemaVersions` table.\n3. Existing `infra/0X-*.sql` files become the baseline (re-numbered as `0001_*.sql` etc.) run-once.\n4. New schema changes go in as new `YYYYMMDDHHmm_*` scripts \u2014 never modify the old ones.\n\nCoordinates with `tsqr-deploy#2` (the immediate SQL fix becomes a migration script) and `tsqr-tool-lib#41` (schema hardening).\n\n**Source:**\n- [Section #28 - No DB Migration Framework \u2014 ALTER TABLE Without IF NOT EXISTS, No Version Table](https://github.com/lstbob/tsqr-domain/blob/main/thegoodandthebad-v2.md#28-no-db-migration-framework--alter-table-without-if-not-exists-no-version-table)",
+          "number": 3,
+          "repository": "lstbob/tsqr-deploy",
+          "title": "[Tech] Adopt DB migration runner (DbUp/FluentMigrator); no `IF NOT EXISTS`/no version table today",
+          "type": "Issue",
+          "url": "https://github.com/lstbob/tsqr-deploy/issues/3"
+        },
+        "estimate(SP)": 8,
+        "id": "PVTI_lAHODNbEK84A7AFTzgzVZko",
+        "labels": [
+          "enhancement",
+          "audit-v2"
+        ],
+        "priority": "P1",
+        "repository": "https://github.com/lstbob/tsqr-deploy",
+        "status": "Backlog",
+        "title": "[Tech] Adopt DB migration runner (DbUp/FluentMigrator); no `IF NOT EXISTS`/no version table today"
+      }
+    ],
+    "totalCount": 61
+  }
+}
