@@ -5,6 +5,11 @@ on:
     # Daily at 07:00 UTC. Adjust if you prefer a different local time.
     - cron: "0 7 * * *"
   workflow_dispatch:
+    inputs:
+      alert_days:
+        description: "Days before sprint end to alert (default: 2)"
+        required: false
+        default: "2"
 
 permissions:
   contents: read
@@ -28,5 +33,5 @@ jobs:
       - name: Create or update sprint-end alert
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
-          SPRINT_ALERT_DAYS: "2"
+          SPRINT_ALERT_DAYS: ${{ inputs.alert_days || '2' }}
         run: python3 scripts/sprint-alert
