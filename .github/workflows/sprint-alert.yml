@@ -1,0 +1,32 @@
+name: Sprint end alert
+
+on:
+  schedule:
+    # Daily at 07:00 UTC. Adjust if you prefer a different local time.
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PROJECT_TOKEN
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PROJECT_TOKEN secret is not set. Create a PAT with 'project' and 'repo' scopes and add it as a repository secret."
+            exit 1
+          fi
+
+      - name: Create or update sprint-end alert
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          SPRINT_ALERT_DAYS: "2"
+        run: python3 scripts/sprint-alert

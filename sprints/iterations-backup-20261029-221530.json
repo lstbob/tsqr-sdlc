@@ -1,0 +1,129 @@
+{
+  "exportedAt": "2026-10-29T20:15:30.965693+00:00",
+  "project": {
+    "id": "PVT_kwHODNbEK84A7AFT",
+    "title": "tsqr"
+  },
+  "field": {
+    "id": "PVTIF_lAHODNbEK84A7AFTzg29qs4",
+    "name": "bob-sprint"
+  },
+  "active": [
+    {
+      "id": "9991772e",
+      "title": "Sprint 8",
+      "startDate": "2026-10-16",
+      "duration": 14
+    },
+    {
+      "id": "27cea95a",
+      "title": "Sprint 9",
+      "startDate": "2026-10-30",
+      "duration": 14
+    },
+    {
+      "id": "22af0a57",
+      "title": "Sprint 10",
+      "startDate": "2026-11-13",
+      "duration": 14
+    },
+    {
+      "id": "e1d8c409",
+      "title": "Sprint 11",
+      "startDate": "2026-11-27",
+      "duration": 14
+    },
+    {
+      "id": "ac805860",
+      "title": "Sprint 12",
+      "startDate": "2026-12-11",
+      "duration": 14
+    },
+    {
+      "id": "b14ffede",
+      "title": "Sprint 13",
+      "startDate": "2026-12-25",
+      "duration": 14
+    },
+    {
+      "id": "ec87525b",
+      "title": "Sprint 14",
+      "startDate": "2027-01-08",
+      "duration": 14
+    },
+    {
+      "id": "8e18e550",
+      "title": "Sprint 15",
+      "startDate": "2027-01-22",
+      "duration": 14
+    },
+    {
+      "id": "a350a0d6",
+      "title": "Sprint 16",
+      "startDate": "2027-02-05",
+      "duration": 14
+    },
+    {
+      "id": "00923610",
+      "title": "Sprint 17",
+      "startDate": "2027-02-19",
+      "duration": 14
+    },
+    {
+      "id": "9b1885dc",
+      "title": "Sprint 18",
+      "startDate": "2027-03-05",
+      "duration": 14
+    },
+    {
+      "id": "f8517d3d",
+      "title": "Sprint 19",
+      "startDate": "2027-03-19",
+      "duration": 14
+    }
+  ],
+  "completed": [
+    {
+      "id": "54209e0e",
+      "title": "Sprint 1",
+      "startDate": "2026-07-10",
+      "duration": 14
+    },
+    {
+      "id": "8d41fadf",
+      "title": "Sprint 2",
+      "startDate": "2026-07-24",
+      "duration": 14
+    },
+    {
+      "id": "29213833",
+      "title": "Sprint 3",
+      "startDate": "2026-08-07",
+      "duration": 14
+    },
+    {
+      "id": "b42e749f",
+      "title": "Sprint 4",
+      "startDate": "2026-08-21",
+      "duration": 14
+    },
+    {
+      "id": "1673aaa1",
+      "title": "Sprint 5",
+      "startDate": "2026-09-04",
+      "duration": 14
+    },
+    {
+      "id": "62a037e8",
+      "title": "Sprint 6",
+      "startDate": "2026-09-18",
+      "duration": 14
+    },
+    {
+      "id": "efc2d425",
+      "title": "Sprint 7",
+      "startDate": "2026-10-02",
+      "duration": 14
+    }
+  ]
+}

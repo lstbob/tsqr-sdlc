@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+"""Create or update a GitHub issue when a sprint is ending with open items.
+
+GitHub Projects has no native time-based sprint notification.  This script is
+run by .github/workflows/sprint-alert.yml; it creates an issue assigned to the
+configured user, and GitHub's native assignment notification sends the email.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+import os
+import re
+import subprocess
+import sys
+
+from sprintlib import ALERT_DAYS, CAPACITY, end_date, items_in, load_state
+
+REPO = os.environ.get("SPRINT_ALERT_REPO", "lstbob/tsqr-sdlc")
+ASSIGNEE = os.environ.get("SPRINT_ALERT_ASSIGNEE", "lstbob")
+LABEL = os.environ.get("SPRINT_ALERT_LABEL", "sprint-alert")
+
+
+def gh(*args: str) -> str:
+    proc = subprocess.run(["gh", *args], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr.strip() or proc.stdout.strip())
+    return proc.stdout.strip()
+
+
+def ensure_label() -> None:
+    raw = gh("label", "list", "-R", REPO, "--json", "name", "--limit", "100")
+    names = {label["name"] for label in json.loads(raw)}
+    if LABEL not in names:
+        gh(
+            "label",
+            "create",
+            LABEL,
+            "-R",
+            REPO,
+            "--color",
+            "FBCA04",
+            "--description",
+            "Sprint end alert",
+        )
+
+
+def open_alerts() -> list[dict]:
+    raw = gh(
+        "issue",
+        "list",
+        "-R",
+        REPO,
+        "--label",
+        LABEL,
+        "--state",
+        "open",
+        "--json",
+        "number,title,url",
+        "--limit",
+        "50",
+    )
+    return json.loads(raw)
+
+
+def find_alert(sprint_title: str) -> dict | None:
+    pattern = re.compile(rf"\b{re.escape(sprint_title)}\b")
+    for issue in open_alerts():
+        if pattern.search(issue["title"]):
+            return issue
+    return None
+
+
+def plural(count: int, singular: str, plural_form: str | None = None) -> str:
+    return singular if count == 1 else (plural_form or singular + "s")
+
+
+def title_for(iteration: dict, days: int, count: int) -> str:
+    if days > 1:
+        when = f"ends in {days} days"
+    elif days == 1:
+        when = "ends tomorrow"
+    elif days == 0:
+        when = "ends today"
+    elif days == -1:
+        when = "ended yesterday"
+    else:
+        when = f"ended {abs(days)} days ago"
+    return f"⏰ {iteration['title']} {when} — {count} open {plural(count, 'item')}"
+
+
+def body_for(iteration: dict, open_items: list[dict], days: int) -> str:
+    total_sp = sum((i["estimate"] or 0) for i in open_items)
+    if days > 1:
+        lead = f"**{iteration['title']} ends in {days} days.**"
+    elif days == 1:
+        lead = f"**{iteration['title']} ends tomorrow.**"
+    elif days == 0:
+        lead = f"**{iteration['title']} ends today.**"
+    elif days == -1:
+        lead = f"**{iteration['title']} ended yesterday.**"
+    else:
+        lead = f"**{iteration['title']} ended {abs(days)} days ago.**"
+
+    lines = [
+        f"## ⏰ {iteration['title']}",
+        "",
+        lead,
+        "",
+        f"- **Dates:** {iteration['startDate']} → {end_date(iteration)}",
+        f"- **Open items:** {len(open_items)} ({total_sp} SP)",
+        f"- **Capacity:** {CAPACITY} SP",
+        "",
+        "| Item | SP | Status | Priority |",
+        "|---|---|---|---|",
+    ]
+    for item in sorted(open_items, key=lambda i: (i["priority"] or "P9", i["key"])):
+        title = item["title"].replace("|", "\\|")
+        link = f"[{item['key']}]({item['url']})" if item.get("url") else item["key"]
+        lines.append(
+            f"| {link} — {title} | {item['estimate'] if item['estimate'] is not None else '?'} "
+            f"| {item['status'] or '-'} | {item['priority'] or '-'} |"
+        )
+    lines += [
+        "",
+        "### What to do",
+        "",
+        "- Finish the item(s), or",
+        "- Defer them with `./scripts/sprint defer <repo>#<num>`; later sprints shift forward automatically.",
+        "",
+        "_Created automatically by the sprint-alert workflow._",
+    ]
+    return "\n".join(lines)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Sprint end alert")
+    parser.add_argument("--dry-run", action="store_true", help="print alerts without creating issues")
+    args = parser.parse_args()
+
+    today = dt.date.today()
+    state = load_state()
+    if not args.dry_run:
+        ensure_label()
+
+    candidates = []
+    for iteration in state["active"] + state["completed"]:
+        days = (end_date(iteration) - today).days
+        if -1 <= days <= ALERT_DAYS:
+            candidates.append((iteration, days))
+
+    if not candidates:
+        print(f"No sprint ending within {ALERT_DAYS} day(s).")
+        return 0
+
+    for iteration, days in sorted(candidates, key=lambda pair: pair[1]):
+        open_items = [
+            item
+            for item in items_in(state, iteration["title"])
+            if item["status"] != "Done" and item["state"] != "CLOSED"
+        ]
+        if not open_items:
+            print(f"{iteration['title']}: no open items.")
+            continue
+
+        title = title_for(iteration, days, len(open_items))
+        body = body_for(iteration, open_items, days)
+        if args.dry_run:
+            print(f"--- {title} ---")
+            print(body)
+            print()
+            continue
+        existing = find_alert(iteration["title"])
+
+        if existing:
+            gh("issue", "edit", str(existing["number"]), "-R", REPO, "--title", title, "--body", body)
+            print(f"{iteration['title']}: updated #{existing['number']} ({len(open_items)} open)")
+        else:
+            url = gh(
+                "issue",
+                "create",
+                "-R",
+                REPO,
+                "--title",
+                title,
+                "--body",
+                body,
+                "--assignee",
+                ASSIGNEE,
+                "--label",
+                LABEL,
+            )
+            print(f"{iteration['title']}: created {url} ({len(open_items)} open)")
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)

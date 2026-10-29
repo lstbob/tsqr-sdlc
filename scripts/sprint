@@ -1,0 +1,416 @@
+#!/usr/bin/env python3
+"""Sprint scheduler for the tsqr GitHub Project (#4).
+
+Usage:
+    ./scripts/sprint status [--json]
+    ./scripts/sprint audit
+    ./scripts/sprint defer <repo#num> [--apply]
+    ./scripts/sprint move <repo#num> --to <sprint> [--apply]
+    ./scripts/sprint rebalance [--from <sprint>] [--apply]
+    ./scripts/sprint extend [--count N] [--apply]
+
+All write commands are dry-run unless --apply is passed.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+
+from sprintlib import (
+    CAPACITY,
+    active_by_number,
+    apply_iteration,
+    audit,
+    capacity_bar,
+    ensure_sprints,
+    extend_iterations,
+    iteration_by_title,
+    items_in,
+    load_state,
+    print_status,
+    sprint_load,
+    sprint_number,
+    sprint_title,
+)
+
+PRIORITY_RANK = {"P0": 0, "P1": 1, "P2": 2}
+
+
+def parse_ref(ref: str) -> str:
+    if ref.startswith("http://") or ref.startswith("https://"):
+        parts = ref.rstrip("/").split("/")
+        if "issues" in parts:
+            idx = parts.index("issues")
+            if idx >= 2 and idx + 1 < len(parts):
+                return f"{parts[idx - 2]}#{parts[idx + 1]}"
+        raise SystemExit(f"Cannot parse issue URL: {ref}")
+    if "#" in ref:
+        repo, number = ref.rsplit("#", 1)
+        repo = repo.split("/")[-1]
+        if repo and number.isdigit():
+            return f"{repo}#{number}"
+    raise SystemExit(f"Expected <repo>#<number> or an issue URL, got: {ref}")
+
+
+def find_item(state: dict, ref: str) -> dict:
+    key = parse_ref(ref)
+    item = state["by_key"].get(key)
+    if not item:
+        raise SystemExit(f"{key} is not on the project")
+    return item
+
+
+def validate_deferrable(item: dict, capacity: int) -> int:
+    if item["is_epic"]:
+        raise SystemExit(f"{item['key']} is a parent epic; epics must stay unscheduled")
+    if item["state"] == "CLOSED" or item["status"] == "Done":
+        raise SystemExit(f"{item['key']} is already closed/Done")
+    if not item["iteration"]:
+        raise SystemExit(f"{item['key']} has no sprint; use `move --to <sprint>`")
+    estimate = item["estimate"]
+    if estimate is None:
+        print(f"WARNING: {item['key']} has no estimate; treating it as 0 SP", file=sys.stderr)
+        estimate = 0
+    if estimate > capacity:
+        raise SystemExit(
+            f"{item['key']} is {estimate} SP, over the {capacity} SP capacity; split it first"
+        )
+    return estimate
+
+
+def build_shift(state: dict, item: dict, target: int) -> dict[str, str]:
+    """Move `item` to `target`; shift every item at or after `target` by +1."""
+    changes: dict[str, str] = {}
+    for other in state["items"]:
+        if other["id"] == item["id"]:
+            continue
+        number = sprint_number((other["iteration"] or {}).get("title"))
+        if number is not None and number >= target:
+            changes[other["id"]] = sprint_title(number + 1)
+    changes[item["id"]] = sprint_title(target)
+    return changes
+
+
+def simulate(state: dict, changes: dict[str, str]) -> dict[str, list[dict]]:
+    buckets: dict[str, list[dict]] = {}
+    for item in state["items"]:
+        title = changes.get(item["id"], (item["iteration"] or {}).get("title"))
+        if title:
+            buckets.setdefault(title, []).append(item)
+    return buckets
+
+
+def extension_label(max_active: int, highest: int) -> str:
+    if highest == max_active + 1:
+        return f"Will add {sprint_title(highest)} first."
+    return f"Will add {sprint_title(max_active + 1)}..{sprint_title(highest)} first."
+
+
+def print_changes(state: dict, item: dict, changes: dict[str, str], capacity: int) -> None:
+    print(f"Item: {item['key']} ({item['estimate'] or 0} SP)")
+    print(f"  {item['iteration']['title']} -> {changes[item['id']]}")
+    others = {k: v for k, v in changes.items() if k != item["id"]}
+    if others:
+        print(f"Shifted forward: {len(others)} item(s)")
+        for item_id, title in sorted(others.items(), key=lambda kv: kv[1]):
+            other = state["by_id"][item_id]
+            print(f"  {other['key']:24} {(other['iteration'] or {}).get('title', '?'):9} -> {title}")
+
+    buckets = simulate(state, changes)
+    titles = sorted(
+        set(buckets) | set(changes.values()),
+        key=lambda t: (sprint_number(t) or 999),
+    )
+    print("Resulting loads:")
+    for title in titles:
+        load = sum((i["estimate"] or 0) for i in buckets.get(title, []))
+        if load == 0 and title not in changes.values():
+            continue
+        flag = "  OVER" if load > capacity else ""
+        print(f"  {title:9} {load:2}/{capacity} SP {capacity_bar(load, capacity)}{flag}")
+
+
+def apply_changes(state: dict, changes: dict[str, str]) -> None:
+    for item_id, title in changes.items():
+        iteration = iteration_by_title(state, title)
+        if not iteration:
+            raise SystemExit(f"Iteration {title!r} does not exist")
+        apply_iteration(state, item_id, iteration["id"])
+    print(f"Applied {len(changes)} change(s).")
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    state = load_state()
+    if args.json:
+        payload = {
+            "project": state["project"],
+            "capacity": args.capacity,
+            "sprints": [
+                {
+                    "title": iteration["title"],
+                    "startDate": iteration["startDate"],
+                    "duration": iteration["duration"],
+                    "load": sprint_load(state, iteration["title"]),
+                    "items": [
+                        {
+                            "key": i["key"],
+                            "title": i["title"],
+                            "estimate": i["estimate"],
+                            "status": i["status"],
+                            "priority": i["priority"],
+                            "url": i["url"],
+                        }
+                        for i in items_in(state, iteration["title"])
+                    ],
+                }
+                for iteration in state["active"]
+            ],
+            "backlog": {
+                "count": len([i for i in state["items"] if not i["iteration"]]),
+                "sp": sum((i["estimate"] or 0) for i in state["items"] if not i["iteration"]),
+            },
+        }
+        print(json.dumps(payload, indent=2))
+    else:
+        print_status(state, args.capacity)
+    return 0
+
+
+def cmd_audit(args: argparse.Namespace) -> int:
+    state = load_state()
+    problems = audit(state, args.capacity)
+    if not problems:
+        print("Audit clean: every sprint is within capacity and no epics are scheduled.")
+        return 0
+    errors = 0
+    for level, message in problems:
+        print(f"{level.upper():5} {message}")
+        if level == "error":
+            errors += 1
+    print(f"\n{errors} error(s), {len(problems) - errors} warning(s)")
+    return 1 if errors else 0
+
+
+def cmd_defer(args: argparse.Namespace) -> int:
+    state = load_state()
+    item = find_item(state, args.issue)
+    estimate = validate_deferrable(item, args.capacity)
+    current = sprint_number(item["iteration"]["title"])
+    active = active_by_number(state)
+    if current not in active:
+        raise SystemExit(
+            f"{item['key']} is in completed {item['iteration']['title']}; use `move --to {min(active)}`"
+        )
+    target = args.to if args.to is not None else current + 1
+    if target <= current:
+        raise SystemExit(f"Target Sprint {target} must be after the current Sprint {current}")
+    if target not in active and target <= max(active):
+        raise SystemExit(f"Sprint {target} is not active; choose an active sprint")
+
+    changes = build_shift(state, item, target)
+    highest = max(sprint_number(title) or 0 for title in changes.values())
+    if highest > max(active):
+        print(extension_label(max(active), highest))
+    print_changes(state, item, changes, args.capacity)
+    if not args.apply:
+        print("\nDry run. Re-run with --apply to write.")
+        return 0
+
+    state = ensure_sprints(state, highest, apply=True)
+    apply_changes(state, changes)
+    print()
+    print_status(load_state(), args.capacity)
+    return 0
+
+
+def cmd_move(args: argparse.Namespace) -> int:
+    state = load_state()
+    item = find_item(state, args.issue)
+    estimate = validate_deferrable(item, args.capacity)
+    current = sprint_number(item["iteration"]["title"])
+    active = active_by_number(state)
+    target = args.to
+    if target == current:
+        print(f"{item['key']} is already in Sprint {target}.")
+        return 0
+    if target not in active and target <= max(active):
+        raise SystemExit(f"Sprint {target} is not active; choose an active sprint")
+
+    if target < current:
+        # Pull forward: no cascade, but the destination must have room.
+        load = sprint_load(state, sprint_title(target))
+        if load + estimate > args.capacity:
+            raise SystemExit(
+                f"Sprint {target} has {load} SP; adding {estimate} SP would exceed {args.capacity}"
+            )
+        changes = {item["id"]: sprint_title(target)}
+    else:
+        changes = build_shift(state, item, target)
+
+    highest = max(sprint_number(title) or 0 for title in changes.values())
+    if highest > max(active):
+        print(extension_label(max(active), highest))
+    print_changes(state, item, changes, args.capacity)
+    if not args.apply:
+        print("\nDry run. Re-run with --apply to write.")
+        return 0
+
+    state = ensure_sprints(state, highest, apply=True)
+    apply_changes(state, changes)
+    print()
+    print_status(load_state(), args.capacity)
+    return 0
+
+
+def cmd_rebalance(args: argparse.Namespace) -> int:
+    state = load_state()
+    active = active_by_number(state)
+    start = args.start if args.start is not None else min(active)
+    if start not in active:
+        raise SystemExit(f"Sprint {start} is not active")
+
+    candidates = []
+    oversized = []
+    for item in state["items"]:
+        number = sprint_number((item["iteration"] or {}).get("title"))
+        if number is None or number < start:
+            continue
+        if item["is_epic"]:
+            continue
+        if (item["estimate"] or 0) > args.capacity:
+            oversized.append(item)
+            continue
+        candidates.append(item)
+
+    candidates.sort(
+        key=lambda i: (
+            sprint_number((i["iteration"] or {}).get("title")) or 999,
+            PRIORITY_RANK.get(i["priority"], 3),
+            i["key"],
+        )
+    )
+
+    buckets: list[list[dict]] = []
+    current: list[dict] = []
+    load = 0
+    for item in candidates:
+        estimate = item["estimate"] or 0
+        if current and load + estimate > args.capacity:
+            buckets.append(current)
+            current = []
+            load = 0
+        current.append(item)
+        load += estimate
+    if current:
+        buckets.append(current)
+
+    if not buckets:
+        print("Nothing to rebalance.")
+        return 0
+
+    last_target = start + len(buckets) - 1
+    if last_target > max(active):
+        print(f"Will add {sprint_title(max(active) + 1)}..{sprint_title(last_target)} first.")
+
+    changes: dict[str, str] = {}
+    for offset, bucket in enumerate(buckets):
+        title = sprint_title(start + offset)
+        for item in bucket:
+            old = (item["iteration"] or {}).get("title")
+            if old != title:
+                changes[item["id"]] = title
+
+    print(f"Rebalancing {len(candidates)} item(s) from Sprint {start} onward:")
+    for offset, bucket in enumerate(buckets):
+        title = sprint_title(start + offset)
+        load = sum((i["estimate"] or 0) for i in bucket)
+        print(f"  {title:9} {load:2}/{args.capacity} SP  " + ", ".join(i["key"] for i in bucket))
+
+    if oversized:
+        print("\nLeft untouched (over capacity, split first):")
+        for item in oversized:
+            print(f"  {item['key']:24} {item['estimate']} SP  {item['title'][:60]}")
+
+    if not changes:
+        print("\nAlready balanced.")
+        return 0
+
+    if not args.apply:
+        print("\nDry run. Re-run with --apply to write.")
+        return 0
+
+    state = ensure_sprints(state, last_target, apply=True)
+    apply_changes(state, changes)
+    print()
+    print_status(load_state(), args.capacity)
+    return 0
+
+
+def cmd_extend(args: argparse.Namespace) -> int:
+    if not args.apply:
+        print(f"Would add {args.count} iteration(s):")
+        extend_iterations(args.count, apply=False)
+        print("\nDry run. Re-run with --apply to write.")
+        return 0
+    print(f"Adding {args.count} iteration(s):")
+    extend_iterations(args.count, apply=True)
+    print()
+    print_status(load_state(), args.capacity)
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="tsqr sprint scheduler")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    status = sub.add_parser("status", help="show sprint loads")
+    status.add_argument("--json", action="store_true", help="machine-readable output")
+    status.add_argument("--capacity", type=int, default=CAPACITY)
+    status.set_defaults(func=cmd_status)
+
+    audit_p = sub.add_parser("audit", help="check capacity, epics, and estimates")
+    audit_p.add_argument("--capacity", type=int, default=CAPACITY)
+    audit_p.set_defaults(func=cmd_audit)
+
+    defer = sub.add_parser("defer", help="move an item to the next sprint and cascade")
+    defer.add_argument("issue", help="repo#number or issue URL")
+    defer.add_argument("--to", type=int, default=None, help="target sprint (default: next)")
+    defer.add_argument("--apply", action="store_true", help="write the changes")
+    defer.add_argument("--capacity", type=int, default=CAPACITY)
+    defer.set_defaults(func=cmd_defer)
+
+    move = sub.add_parser("move", help="move an item to a specific sprint")
+    move.add_argument("issue", help="repo#number or issue URL")
+    move.add_argument("--to", type=int, required=True, help="target sprint")
+    move.add_argument("--apply", action="store_true", help="write the changes")
+    move.add_argument("--capacity", type=int, default=CAPACITY)
+    move.set_defaults(func=cmd_move)
+
+    rebalance = sub.add_parser("rebalance", help="repack sprints from a given sprint")
+    rebalance.add_argument("--from", dest="start", type=int, default=None)
+    rebalance.add_argument("--apply", action="store_true", help="write the changes")
+    rebalance.add_argument("--capacity", type=int, default=CAPACITY)
+    rebalance.set_defaults(func=cmd_rebalance)
+
+    extend = sub.add_parser("extend", help="add future iterations")
+    extend.add_argument("--count", type=int, default=1)
+    extend.add_argument("--apply", action="store_true", help="write the changes")
+    extend.add_argument("--capacity", type=int, default=CAPACITY)
+    extend.set_defaults(func=cmd_extend)
+
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
