@@ -3,7 +3,9 @@
 SDLC artifacts for the **TSQR (TownsSquare)** platform — backlog, sprints, issue definitions, ADRs, and process documentation across all microservices.
 
 - **[Project Board](https://github.com/users/lstbob/projects/4)**
-- **[Sprint Backlog](https://github.com/users/lstbob/projects/4/views/1)**
+- **[Current Sprint](https://github.com/users/lstbob/projects/4/views/1)**
+- **[Next Sprint](https://github.com/users/lstbob/projects/4/views/2)**
+- **[Sprint Workflow Runbook](docs/SPRINT-WORKFLOW.md)**
 
 ---
 
@@ -13,6 +15,7 @@ SDLC artifacts for the **TSQR (TownsSquare)** platform — backlog, sprints, iss
 tsqr-sdlc/
 ├── README.md
 ├── PROCESS.md
+├── docs/                      # Sprint workflow runbook and how-to docs
 ├── issues/                    # Canonical issue definitions by repo
 │   ├── tsqr-tool-lib/
 │   ├── tsqr-communities/
@@ -29,13 +32,18 @@ tsqr-sdlc/
 
 ---
 
-## Sprint Backlog (rolling 10-sprint horizon × 5 SP max per 2-week sprint)
+## Sprint Backlog (Sprint 9–19, max 5 SP per 2-week sprint)
 
 **Capacity:** 1 developer, max 5 story points per sprint.
 
 > **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
-The board was re-anchored on **2026-10-29**. Sprint 9 (Oct 30–Nov 12) is skipped because it starts before 2 November. The first active sprint is **Sprint 10 (Nov 13–26)**.
+The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint; it holds one 3 SP item and has 2 SP of headroom. **Sprint 10 (Nov 13–26)** is next. Sprint 20 is kept empty as headroom.
+
+### Sprint 9 (Oct 30–Nov 12)
+| Item | SP | Repo |
+|------|----|------|
+| Query layer: inject `ISqlUnitOfWork` instead of `connectionString` | 3 | communities [#5](https://github.com/lstbob/tsqr-communities/issues/5) |
 
 ### Sprint 10 (Nov 13–26)
 | Item | SP | Repo |
@@ -88,11 +96,11 @@ The board was re-anchored on **2026-10-29**. Sprint 9 (Oct 30–Nov 12) is skipp
 |------|----|------|
 | QuickRegister txn fix + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
 
-**Scheduled: 50 SP across 10 sprints.** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
+**Scheduled: 53 SP across 11 sprints (Sprint 9–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
 
 ### Backlog (unscheduled)
 
-The remaining **210 SP** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below).
+The remaining **265 SP across 49 items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
 
 **Oversized items (>5 SP) — must be split before scheduling:**
 
@@ -112,20 +120,20 @@ Per `PROCESS.md`, any issue >5 SP must be split into sub-issues where each part 
 
 ---
 
-## Rescheduling
+## Rescheduling & sprint workflow
 
 The `scripts/sprint` CLI enforces the 5 SP capacity and cascades changes. It is a dry-run by default; add `--apply` to write.
 
+> **Full runbook:** see **[docs/SPRINT-WORKFLOW.md](docs/SPRINT-WORKFLOW.md)** for step-by-step add/defer/move/rebalance instructions, recipes, and troubleshooting.
+
 ```bash
-./scripts/sprint status                 # per-sprint load and capacity
-./scripts/sprint audit                  # epics, oversized items, missing estimates
-./scripts/sprint defer tsqr-tool-lib#43 # preview moving to the next sprint
-./scripts/sprint defer tsqr-tool-lib#43 --apply
-./scripts/sprint add tsqr-communities#5 --to 9   # add an unscheduled item
-./scripts/sprint add tsqr-communities#5 --to 9 --apply
-./scripts/sprint move tsqr-tool-lib#43 --to 16 --apply
-./scripts/sprint rebalance --from 10 --apply
-./scripts/sprint extend --count 1 --apply
+./scripts/sprint status                  # per-sprint load and capacity
+./scripts/sprint audit                   # epics, oversized items, missing estimates
+./scripts/sprint add <repo>#<num> --to 9 # add a backlog item (dry run)
+./scripts/sprint defer <repo>#<num>      # defer to next sprint + cascade (dry run)
+./scripts/sprint move <repo>#<num> --to 12
+./scripts/sprint rebalance --from 9
+./scripts/sprint extend --count 1
 ```
 
 **`defer` behaviour:** moves the item to the next sprint, shifts every item in later sprints forward one iteration, and refuses to place an item larger than the capacity. If the last sprint overflows, it adds a new iteration first (with a config backup).
@@ -151,7 +159,7 @@ If an alert issue for that sprint is already open, the workflow updates it inste
    gh secret set PROJECT_TOKEN -R lstbob/tsqr-sdlc
    ```
 
-3. (Optional) adjust `SPRINT_ALERT_DAYS` in the workflow.
+3. (Optional) adjust the default alert window in `.github/workflows/sprint-alert.yml`, or pass `alert_days` when running the workflow manually.
 
 ---
 
@@ -174,7 +182,7 @@ All 61 board items use:
 
 | Field | Values Used |
 |-------|-------------|
-| **Sprint** (bob-sprint) | Sprint 10–19 for scheduled work; empty for the Backlog |
+| **Sprint** (bob-sprint) | Sprint 9–19 for scheduled work; empty for the Backlog |
 | **Priority** | P0 (critical), P1 (high), P2 (medium) |
 | **Size** | XS, S, M, L, XL |
 | **Estimate(SP)** | 1, 2, 3, 5, 8, 13 (Fibonacci) |

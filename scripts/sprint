@@ -70,7 +70,7 @@ def validate_deferrable(item: dict, capacity: int) -> int:
     if item["state"] == "CLOSED" or item["status"] == "Done":
         raise SystemExit(f"{item['key']} is already closed/Done")
     if not item["iteration"]:
-        raise SystemExit(f"{item['key']} has no sprint; use `move --to <sprint>`")
+        raise SystemExit(f"{item['key']} has no sprint; use `add --to <sprint>`")
     estimate = item["estimate"]
     if estimate is None:
         print(f"WARNING: {item['key']} has no estimate; treating it as 0 SP", file=sys.stderr)

@@ -128,6 +128,8 @@ A sprint's total story points must not exceed **5**. To pack efficiently:
 2. Review velocity (did you finish all 5 SP?)
 3. Plan next sprint's 5 SP
 
+> **Tooling:** see [docs/SPRINT-WORKFLOW.md](docs/SPRINT-WORKFLOW.md) for the CLI runbook.
+
 ---
 
 ## 7. Sub-Issues & Parent Tracking
