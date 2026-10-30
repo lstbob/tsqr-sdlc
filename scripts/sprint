@@ -5,6 +5,7 @@ Usage:
     ./scripts/sprint status [--json]
     ./scripts/sprint audit
     ./scripts/sprint defer <repo#num> [--apply]
+    ./scripts/sprint add <repo#num> [--to <sprint>] [--apply]
     ./scripts/sprint move <repo#num> --to <sprint> [--apply]
     ./scripts/sprint rebalance [--from <sprint>] [--apply]
     ./scripts/sprint extend [--count N] [--apply]
@@ -14,6 +15,7 @@ All write commands are dry-run unless --apply is passed.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import sys
 
@@ -23,6 +25,7 @@ from sprintlib import (
     apply_iteration,
     audit,
     capacity_bar,
+    end_date,
     ensure_sprints,
     extend_iterations,
     iteration_by_title,
@@ -224,6 +227,64 @@ def cmd_defer(args: argparse.Namespace) -> int:
     return 0
 
 
+def current_sprint_number(state: dict) -> int:
+    today = dt.date.today()
+    for iteration in state["active"]:
+        start = dt.date.fromisoformat(iteration["startDate"])
+        if start <= today <= end_date(iteration):
+            return sprint_number(iteration["title"])
+    future = [
+        iteration
+        for iteration in state["active"]
+        if dt.date.fromisoformat(iteration["startDate"]) > today
+    ]
+    if future:
+        return sprint_number(future[0]["title"])
+    return max(active_by_number(state))
+
+
+def cmd_add(args: argparse.Namespace) -> int:
+    state = load_state()
+    item = find_item(state, args.issue)
+    if item["is_epic"]:
+        raise SystemExit(f"{item['key']} is a parent epic; epics must stay unscheduled")
+    if item["iteration"]:
+        raise SystemExit(
+            f"{item['key']} is already in {item['iteration']['title']}; use `move` instead"
+        )
+    estimate = item["estimate"]
+    if estimate is None:
+        print(f"WARNING: {item['key']} has no estimate; treating it as 0 SP", file=sys.stderr)
+        estimate = 0
+    if estimate > args.capacity:
+        raise SystemExit(
+            f"{item['key']} is {estimate} SP, over the {args.capacity} SP capacity; split it first"
+        )
+
+    active = active_by_number(state)
+    target = args.to if args.to is not None else current_sprint_number(state)
+    if target not in active:
+        raise SystemExit(f"Sprint {target} is not active; choose an active sprint")
+
+    load = sprint_load(state, sprint_title(target))
+    if load + estimate > args.capacity:
+        raise SystemExit(
+            f"Sprint {target} has {load} SP; adding {estimate} SP would exceed {args.capacity}"
+        )
+
+    print(f"{item['key']} ({estimate} SP): (backlog) -> Sprint {target}")
+    print(f"  Sprint {target}: {load} -> {load + estimate} / {args.capacity} SP")
+    if not args.apply:
+        print("\nDry run. Re-run with --apply to write.")
+        return 0
+
+    apply_iteration(state, item["id"], active[target]["id"])
+    print("Applied.")
+    print()
+    print_status(load_state(), args.capacity)
+    return 0
+
+
 def cmd_move(args: argparse.Namespace) -> int:
     state = load_state()
     item = find_item(state, args.issue)
@@ -379,6 +440,13 @@ def build_parser() -> argparse.ArgumentParser:
     defer.add_argument("--apply", action="store_true", help="write the changes")
     defer.add_argument("--capacity", type=int, default=CAPACITY)
     defer.set_defaults(func=cmd_defer)
+
+    add = sub.add_parser("add", help="add an unscheduled item to a sprint")
+    add.add_argument("issue", help="repo#number or issue URL")
+    add.add_argument("--to", type=int, default=None, help="target sprint (default: current sprint)")
+    add.add_argument("--apply", action="store_true", help="write the changes")
+    add.add_argument("--capacity", type=int, default=CAPACITY)
+    add.set_defaults(func=cmd_add)
 
     move = sub.add_parser("move", help="move an item to a specific sprint")
     move.add_argument("issue", help="repo#number or issue URL")

@@ -121,12 +121,16 @@ The `scripts/sprint` CLI enforces the 5 SP capacity and cascades changes. It is 
 ./scripts/sprint audit                  # epics, oversized items, missing estimates
 ./scripts/sprint defer tsqr-tool-lib#43 # preview moving to the next sprint
 ./scripts/sprint defer tsqr-tool-lib#43 --apply
+./scripts/sprint add tsqr-communities#5 --to 9   # add an unscheduled item
+./scripts/sprint add tsqr-communities#5 --to 9 --apply
 ./scripts/sprint move tsqr-tool-lib#43 --to 16 --apply
 ./scripts/sprint rebalance --from 10 --apply
 ./scripts/sprint extend --count 1 --apply
 ```
 
 **`defer` behaviour:** moves the item to the next sprint, shifts every item in later sprints forward one iteration, and refuses to place an item larger than the capacity. If the last sprint overflows, it adds a new iteration first (with a config backup).
+
+**`add` behaviour:** puts an unscheduled backlog item into a sprint, refusing if the item or the destination exceeds capacity.
 
 **Authentication:** the CLI uses `gh` and needs the `project` scope. In GitHub Actions, set `GH_TOKEN` to a PAT with `project` + `repo` scopes.
 
