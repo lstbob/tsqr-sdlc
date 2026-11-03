@@ -38,7 +38,7 @@ tsqr-sdlc/
 
 > **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
-The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security item shipped on **2026-11-03**; Sprints 9, 10, and 11 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
+The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items shipped on **2026-11-03**; Sprints 9–12 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
 
 ### Sprint 9 (Oct 30–Nov 12)
 | Item | SP | Repo |
@@ -58,7 +58,7 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 ### Sprint 12 (Dec 11–24)
 | Item | SP | Repo |
 |------|----|------|
-| Refresh token concurrency + revoke guard | 5 | autheo [#4](https://github.com/lstbob/tsqr-autheo/issues/4) |
+| _No scheduled items_ | — | — |
 
 ### Sprint 13 (Dec 25–Jan 7)
 | Item | SP | Repo |
@@ -96,7 +96,7 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 |------|----|------|
 | QuickRegister txn fix + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
 
-**Scheduled: 40 SP across 8 active sprints (Sprint 9–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
+**Scheduled: 35 SP across 7 active sprints (Sprint 9–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
 
 ### Backlog (unscheduled)
 
