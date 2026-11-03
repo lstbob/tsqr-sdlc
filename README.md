@@ -38,22 +38,22 @@ tsqr-sdlc/
 
 > **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
-The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint; it holds one 3 SP item and has 2 SP of headroom. **Sprint 10 (Nov 13–26)** is next. Sprint 20 is kept empty as headroom.
+The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint and is at capacity with one 5 SP item. Sprint 10 and Sprint 11 are temporarily empty after their items shipped; Sprint 20 is kept empty as headroom.
 
 ### Sprint 9 (Oct 30–Nov 12)
 | Item | SP | Repo |
 |------|----|------|
-| Query layer: inject `ISqlUnitOfWork` instead of `connectionString` | 3 | communities [#5](https://github.com/lstbob/tsqr-communities/issues/5) |
+| `/register` self-Admin exploit + password reset + `RevokedReasonIsReuse` | 5 | autheo [#3](https://github.com/lstbob/tsqr-autheo/issues/3) |
 
 ### Sprint 10 (Nov 13–26)
 | Item | SP | Repo |
 |------|----|------|
-| Email-change feature end-to-end | 5 | identity [#5](https://github.com/lstbob/tsqr-identity/issues/5) |
+| _No scheduled items_ | — | — |
 
 ### Sprint 11 (Nov 27–Dec 10)
 | Item | SP | Repo |
 |------|----|------|
-| `/register` self-Admin exploit + password reset | 5 | autheo [#3](https://github.com/lstbob/tsqr-autheo/issues/3) |
+| _No scheduled items_ | — | — |
 
 ### Sprint 12 (Dec 11–24)
 | Item | SP | Repo |
@@ -96,11 +96,11 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 |------|----|------|
 | QuickRegister txn fix + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
 
-**Scheduled: 53 SP across 11 sprints (Sprint 9–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
+**Scheduled: 45 SP across 9 active sprints (Sprint 9–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
 
 ### Backlog (unscheduled)
 
-The remaining **265 SP across 49 items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
+The remaining **273 SP across 51 items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
 
 **Oversized items (>5 SP) — must be split before scheduling:**
 
@@ -178,7 +178,7 @@ If an alert issue for that sprint is already open, the workflow updates it inste
 
 ## Field Values
 
-All 61 board items use:
+All board items use:
 
 | Field | Values Used |
 |-------|-------------|
