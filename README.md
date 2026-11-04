@@ -38,7 +38,7 @@ tsqr-sdlc/
 
 > **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
-The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items and the communities authorization item shipped on **2026-11-03**; the tool-library schema reconciliation shipped on **2026-11-04**. Sprints 9–13 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
+The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items and the communities authorization item shipped on **2026-11-03**; the tool-library schema reconciliation and support ticket/submission hardening shipped on **2026-11-04**. Sprints 9–14 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
 
 ### Sprint 9 (Oct 30–Nov 12)
 | Item | SP | Repo |
@@ -68,7 +68,7 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 ### Sprint 14 (Jan 8–21)
 | Item | SP | Repo |
 |------|----|------|
-| Ticket submission auth + multi-tenancy | 5 | support [#5](https://github.com/lstbob/tsqr-support/issues/5) |
+| _No scheduled items_ | — | — |
 
 ### Sprint 15 (Jan 22–Feb 4)
 | Item | SP | Repo |
@@ -95,11 +95,11 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 |------|----|------|
 | QuickRegister txn fix + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
 
-**Scheduled: 30 SP across 6 active sprints (Sprints 14–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
+**Scheduled: 25 SP across 5 active sprints (Sprints 15–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
 
 ### Backlog (unscheduled)
 
-The remaining **288 SP across 55 items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
+The remaining **293 SP across 56 items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
 
 **Oversized items (>5 SP) — must be split before scheduling:**
 
