@@ -31,6 +31,7 @@ from sprintlib import (
     iteration_by_title,
     items_in,
     load_state,
+    open_backlog,
     print_status,
     sprint_load,
     sprint_number,
@@ -170,8 +171,8 @@ def cmd_status(args: argparse.Namespace) -> int:
                 for iteration in state["active"]
             ],
             "backlog": {
-                "count": len([i for i in state["items"] if not i["iteration"]]),
-                "sp": sum((i["estimate"] or 0) for i in state["items"] if not i["iteration"]),
+                "count": len(open_backlog(state)),
+                "sp": sum((i["estimate"] or 0) for i in open_backlog(state)),
             },
         }
         print(json.dumps(payload, indent=2))

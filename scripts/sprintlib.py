@@ -226,6 +226,14 @@ def items_in(state: dict, title: str) -> list[dict]:
     return [i for i in state["items"] if (i["iteration"] or {}).get("title") == title]
 
 
+def open_backlog(state: dict) -> list[dict]:
+    return [
+        i
+        for i in state["items"]
+        if not i["iteration"] and i["status"] != "Done" and i["state"] != "CLOSED"
+    ]
+
+
 def sprint_load(state: dict, title: str) -> int:
     return sum((i["estimate"] or 0) for i in items_in(state, title))
 
@@ -265,7 +273,7 @@ def print_status(state: dict, capacity: int = CAPACITY) -> None:
             print("    (empty)")
 
     scheduled = [i for i in state["items"] if i["iteration"]]
-    backlog = [i for i in state["items"] if not i["iteration"]]
+    backlog = open_backlog(state)
     print(
         f"\nScheduled: {len(scheduled)} items, {sum((i['estimate'] or 0) for i in scheduled)} SP"
     )
