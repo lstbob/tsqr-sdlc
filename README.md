@@ -38,7 +38,7 @@ tsqr-sdlc/
 
 > **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
-The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items and the communities authorization item shipped on **2026-11-03**; the tool-library schema reconciliation and support ticket/submission hardening shipped on **2026-11-04**; the reservation queue/creation-flow fix shipped on **2026-11-06**; test infrastructure across the microservices shipped on **2026-11-07**. Sprints 9–16 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
+The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items and the communities authorization item shipped on **2026-11-03**; the tool-library schema reconciliation and support ticket/submission hardening shipped on **2026-11-04**; the reservation queue/creation-flow fix shipped on **2026-11-06**; test infrastructure across the microservices and the persistence abstraction cleanup shipped on **2026-11-07**. Sprints 9–17 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
 
 ### Sprint 9 (Oct 30–Nov 12)
 | Item | SP | Repo |
@@ -83,7 +83,7 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 ### Sprint 17 (Feb 19–Mar 4)
 | Item | SP | Repo |
 |------|----|------|
-| Clean persistence abstractions + folder structure | 5 | tool-lib [#36](https://github.com/lstbob/tsqr-tool-lib/issues/36) |
+| _No scheduled items_ | — | — |
 
 ### Sprint 18 (Mar 5–18)
 | Item | SP | Repo |
@@ -95,7 +95,7 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 |------|----|------|
 | QuickRegister txn fix + pagination | 5 | communities [#4](https://github.com/lstbob/tsqr-communities/issues/4) |
 
-**Scheduled: 15 SP across 3 active sprints (Sprints 17–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
+**Scheduled: 10 SP across 2 active sprints (Sprints 18–19).** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
 
 ### Backlog (unscheduled)
 
@@ -147,8 +147,8 @@ The `scripts/sprint` CLI enforces the 5 SP capacity and cascades changes. It is 
 
 Each service owns its test project under `tests/` and uses the same stack:
 xUnit 2.9.3, `Microsoft.NET.Test.Sdk` 17.14.1, `xunit.runner.visualstudio`
-3.1.4, and `coverlet.collector` 6.0.4. Domain invariants and command handlers
-are covered with hand-written fakes (no mocking library).
+3.1.4, and `coverlet.collector` 6.0.4. Domain invariants, persistence adapters,
+and command handlers are covered with hand-written fakes (no mocking library).
 
 Run every discovered suite from the workspace:
 
@@ -203,7 +203,7 @@ All board items use:
 
 | Field | Values Used |
 |-------|-------------|
-| **Sprint** (bob-sprint) | Sprint 9–19 (currently Sprints 17–19 hold scheduled work); empty for the Backlog |
+| **Sprint** (bob-sprint) | Sprint 9–19 (currently Sprints 18–19 hold scheduled work); empty for the Backlog |
 | **Priority** | P0 (critical), P1 (high), P2 (medium) |
 | **Size** | XS, S, M, L, XL |
 | **Estimate(SP)** | 1, 2, 3, 5, 8, 13 (Fibonacci) |
