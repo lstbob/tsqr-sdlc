@@ -143,6 +143,28 @@ The `scripts/sprint` CLI enforces the 5 SP capacity and cascades changes. It is 
 
 ---
 
+## Testing
+
+Each service owns its test project under `tests/` and uses the same stack:
+xUnit 2.9.3, `Microsoft.NET.Test.Sdk` 17.14.1, `xunit.runner.visualstudio`
+3.1.4, and `coverlet.collector` 6.0.4. Domain invariants and command handlers
+are covered with hand-written fakes (no mocking library).
+
+Run every discovered suite from the workspace:
+
+```bash
+./scripts/test-all                                  # all affected repos
+./scripts/test-all --repo tsqr-support              # one repo
+./scripts/test-all --repo tsqr-support --repo tsqr-gateway
+./scripts/test-all --filter "FullyQualifiedName~Handler"
+```
+
+The runner discovers `tests/**/*.csproj`, so a new test project is picked up
+automatically. It exits non-zero if any suite fails. Repositories checked out
+on an older branch without the test project are reported as `SKIP`.
+
+---
+
 ## Sprint-end alerts
 
 `.github/workflows/sprint-alert.yml` runs daily at 07:00 UTC. When an iteration ends within 2 days and still has open items, it creates an issue in this repo assigned to `@lstbob` with a checklist. GitHub sends the assignment email — no custom mail server.
