@@ -38,7 +38,7 @@ tsqr-sdlc/
 
 > **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues (e.g., #30, #32) are not assigned to sprints — they remain on the board only for Sub-issues Progress tracking.
 
-The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items and the communities authorization item shipped on **2026-11-03**; the tool-library schema reconciliation and support ticket/submission hardening shipped on **2026-11-04**; the reservation queue/creation-flow fix shipped on **2026-11-06**; test infrastructure across the microservices and the persistence abstraction cleanup shipped on **2026-11-07**; optimistic concurrency control, the communities quick-register transaction/pagination fix, and communities schema hardening shipped on **2026-11-08**. Sprints 9–19 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
+The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is the current sprint. Its autheo security items and the communities authorization item shipped on **2026-11-03**; the tool-library schema reconciliation and support ticket/submission hardening shipped on **2026-11-04**; the reservation queue/creation-flow fix shipped on **2026-11-06**; test infrastructure across the microservices and the persistence abstraction cleanup shipped on **2026-11-07**; optimistic concurrency control, the communities quick-register transaction/pagination fix, and communities schema hardening shipped on **2026-11-08**; the communities read-query layer refactor shipped on **2026-11-09**. Sprints 9–19 are now empty and available for the next pull-forward. Sprint 20 is kept empty as headroom.
 
 ### Sprint 9 (Oct 30–Nov 12)
 | Item | SP | Repo |
@@ -99,7 +99,7 @@ The board was re-anchored on **2026-10-29**. **Sprint 9 (Oct 30–Nov 12)** is t
 
 ### Backlog (unscheduled)
 
-The remaining **260 SP across 48 open items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
+The remaining **255 SP across 47 open items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **77 SP across nine oversized items** that must be split before they can be scheduled.
 
 **Oversized items (>5 SP) — must be split before scheduling:**
 
