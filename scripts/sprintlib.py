@@ -18,7 +18,9 @@ from typing import Any
 OWNER = os.environ.get("SPRINT_OWNER", "lstbob")
 PROJECT_NUMBER = int(os.environ.get("SPRINT_PROJECT", "4"))
 FIELD_NAME = os.environ.get("SPRINT_FIELD", "bob-sprint")
-CAPACITY = int(os.environ.get("SPRINT_CAPACITY", "5"))
+CAPACITY = int(os.environ.get("SPRINT_CAPACITY", "40"))
+MAX_ITEM_SP = int(os.environ.get("SPRINT_MAX_ITEM_SP", "5"))
+BAR_WIDTH = 20
 ALERT_DAYS = int(os.environ.get("SPRINT_ALERT_DAYS", "2"))
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BACKUP_DIR = REPO_ROOT / "sprints"
@@ -252,7 +254,8 @@ def iteration_by_title(state: dict, title: str) -> dict | None:
 def capacity_bar(load: int, capacity: int = CAPACITY) -> str:
     if load > capacity:
         return f"[!{load}/{capacity}]"
-    return "[" + "=" * load + "-" * (capacity - load) + "]"
+    filled = round(BAR_WIDTH * load / capacity) if capacity else 0
+    return "[" + "=" * filled + "-" * (BAR_WIDTH - filled) + "]"
 
 
 def print_status(state: dict, capacity: int = CAPACITY) -> None:
@@ -272,7 +275,11 @@ def print_status(state: dict, capacity: int = CAPACITY) -> None:
         if not items:
             print("    (empty)")
 
-    scheduled = [i for i in state["items"] if i["iteration"]]
+    active_titles = {i["title"] for i in state["active"]}
+    scheduled = [
+        i for i in state["items"]
+        if i["iteration"] and i["iteration"]["title"] in active_titles
+    ]
     backlog = open_backlog(state)
     print(
         f"\nScheduled: {len(scheduled)} items, {sum((i['estimate'] or 0) for i in scheduled)} SP"
@@ -290,24 +297,22 @@ def audit(state: dict, capacity: int = CAPACITY) -> list[tuple[str, str]]:
             problems.append(
                 ("error", f"Epic {item['key']} has {item['iteration']['title']}; epics must be unscheduled")
             )
-        if item["iteration"] and (item["estimate"] or 0) > capacity:
+        if item["iteration"] and item["status"] != "Done" and (item["estimate"] or 0) > MAX_ITEM_SP:
             problems.append(
                 (
                     "error",
-                    f"{item['key']} is {item['estimate']} SP (> {capacity}) in {item['iteration']['title']}",
+                    f"{item['key']} is {item['estimate']} SP (> {MAX_ITEM_SP}) in {item['iteration']['title']}; split it first",
                 )
             )
-        if item["iteration"] and item["estimate"] is None:
+        if item["iteration"] and item["status"] != "Done" and item["estimate"] is None:
             problems.append(
                 ("warn", f"{item['key']} has no estimate (treated as 0 SP) in {item['iteration']['title']}")
-            )
-        if item["iteration"] and item["status"] == "Done":
-            problems.append(
-                ("warn", f"{item['key']} is Done but still in {item['iteration']['title']}")
             )
 
     completed_titles = {i["title"] for i in state["completed"]}
     for item in state["items"]:
+        if item["status"] == "Done":
+            continue
         if item["iteration"] and item["iteration"]["title"] in completed_titles:
             problems.append(
                 ("warn", f"{item['key']} is in completed {item['iteration']['title']}")

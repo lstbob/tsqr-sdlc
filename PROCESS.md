@@ -3,7 +3,8 @@
 ## Team
 - **1 developer** (solo)
 - 2-week sprints
-- Max **5 story points** capacity per sprint
+- Capacity of **40 story points** per sprint (measured speed in Sprints 9 and 10: about 110 SP per sprint)
+- No single issue larger than **5 story points**
 
 ---
 
@@ -75,10 +76,10 @@ Example:
 - Sub 3: `1c — Integrate Policy aggregate and FineService (Part of #30)` (3 SP)
 
 ### Sprint Capacity Rule
-A sprint's total story points must not exceed **5**. To pack efficiently:
-- Combine a **3 SP** item with a **2 SP** item to fill a sprint
-- A **5 SP** item fills a sprint alone
-- Smaller items (1–3 SP) can go solo with slack time
+A sprint's total story points must not exceed **40**. No single issue may be larger than **5 SP**, so a sprint holds at least 8 issues.
+- Fill a sprint in priority order: P0, then P1, then P2.
+- Keep about 5 SP free for review, QA and unplanned fixes.
+- Override the capacity for one run with `SPRINT_CAPACITY=<n>`, and the item limit with `SPRINT_MAX_ITEM_SP=<n>`.
 
 ---
 
@@ -113,7 +114,7 @@ A sprint's total story points must not exceed **5**. To pack efficiently:
 
 ### Before sprint start
 1. Populate sprint from **Backlog** (highest priority P1 items first)
-2. Ensure sprint total ≤ **5 SP**
+2. Make sure that the sprint total is **40 SP** or less
 3. Assign the sprint iteration field to each issue
 
 ### During sprint
@@ -125,8 +126,9 @@ A sprint's total story points must not exceed **5**. To pack efficiently:
 
 ### At sprint end
 1. Any issue not **Done** goes back to **Backlog**
-2. Review velocity (did you finish all 5 SP?)
-3. Plan next sprint's 5 SP
+2. Review the speed: compare the Done SP of the sprint with the 40 SP capacity
+3. Plan the next sprint up to 40 SP
+4. Keep the sprint value on Done issues. It is the record of what each sprint delivered.
 
 > **Tooling:** see [docs/SPRINT-WORKFLOW.md](docs/SPRINT-WORKFLOW.md) for the CLI runbook.
 

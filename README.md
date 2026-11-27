@@ -32,100 +32,129 @@ tsqr-sdlc/
 
 ---
 
-## Sprint Backlog (Sprint 9–19, max 5 SP per 2-week sprint)
+## Sprint Backlog (Sprints 11–16, capacity 40 SP per 2-week sprint)
 
-**Capacity:** 1 developer, max 5 story points per sprint.
+**Capacity:** 1 developer, **40 SP** per sprint, and no single issue larger than **5 SP**. The measured speed in Sprints 9 and 10 was about 110 SP per sprint, so 40 SP leaves room for review, QA and unplanned fixes.
 
-> **Note:** Items listed here are the actionable sub-issues and standalone issues assigned to each sprint. Parent grouping issues are not assigned to sprints; all current parent issues are closed.
+> **Note:** Parent epics stay without a sprint. Only their sub-issues and standalone issues get a sprint. Done issues keep their sprint, so the board records what each sprint delivered.
 
-The board was re-anchored on **2026-10-29**. **Sprint 10 (Nov 13–26)** is the current sprint. Sprint 9 shipped its autheo security items and the communities authorization item on **2026-11-03**; the tool-library schema reconciliation and support ticket/submission hardening shipped on **2026-11-04**; the reservation queue/creation-flow fix shipped on **2026-11-06**; test infrastructure across the microservices and the persistence abstraction cleanup shipped on **2026-11-07**; optimistic concurrency control, the communities quick-register transaction/pagination fix, and communities schema hardening shipped on **2026-11-08**; the communities read-query layer refactor, the soup-kitchen query-handler refactor, and the tool-library loan-renewal command shipped on **2026-11-09**; the soup-kitchen aggregate factories and validation, the tool-library orphaned-domain-event wiring, and the identity cancellation-token/upsert fix shipped on **2026-11-10**; the identity UserProfile encapsulation and domain behavior, the identity Role domain model, the identity suspend/reinstate invariants and audit fields, and the tool-library borrowing eligibility pre-check shipped on **2026-11-11**; the soup-kitchen child-entity aggregate refactor, the support incident aggregate with lifecycle events, the support ticket aggregate with its state machine, and the autheo domain Result/async cleanup shipped on **2026-11-12**. The first four Sprint 10 items — identity schema consolidation/audited soft-delete hardening, the `mbr` JWT claim retirement, the tool-library domain cleanup (debug method removal, `Manufacturer` value object, and terminal `Banned` state), and the verified closure of the already-fixed tool-library one-aggregate-per-transaction refactor — shipped on **2026-11-13**; the CI/CD pipeline rollout and the shared `TSQR.Common.WebApi` hosting defaults (six-service migration) shipped on **2026-11-14**; the communities slug-immutability, typed geography-FK, and `CountryCode` value-object work shipped on **2026-11-15**; the tool-library schema hardening (enum `CHECK` constraints and critical indexes) shipped on **2026-11-15**; the soup-kitchen volunteer uniqueness constraint, domain-event pipeline, and faithful unit-of-work contract shipped on **2026-11-15**; the autheo schema hardening (`RoleName` `CHECK` constraint and `xmin` optimistic concurrency for users) shipped on **2026-11-16**; the soup-kitchen schema hardening (explicit column lists, enum `CHECK` constraints, active-row FK indexes, `xmin` optimistic concurrency, affected-row guards, and soft deletes) shipped on **2026-11-16**; the tool-library affected-row-count checks were verified as already present (from the #37 concurrency work) and the duplicate issue was closed on **2026-11-16**; the communities domain-model improvements (Unicode-aware slug generation with active-slug uniqueness and a single `Location` aggregate for geography lookups) and the support schema/query hardening (explicit columns, enum `CHECK` constraints, query-path indexes, `xmin` optimistic concurrency, affected-row guards, soft deletes, and paginated list queries) shipped on **2026-11-17**; the shared structured logging and distributed tracing layer (`X-Correlation-ID` propagation, JSON log scopes with `UserId`/`CommunityId`, problem-details correlation IDs, OTLP traces/metrics/logs, and gateway OpenTelemetry) shipped on **2026-11-17**; the shared permission catalog and capability-based authorization rollout (identity role-permission persistence, autheo permission claims, and identity/tool-lib/communities/support policy adoption) shipped on **2026-11-18**; the tool-library caller-ownership authorization (explicit `MemberAccounts` subject mapping, reservation/loan ownership guards, repair audit-identity validation, and admin account linking) shipped on **2026-11-19**; the soup-kitchen PII read lockdown (authentication required for guest, donation, and volunteer reads, with the corresponding public gateway routes removed) shipped on **2026-11-19**; the soup-kitchen community-scoping and tenant-claim rollout (tool-library subject-to-community lookup, `community_id` JWT claim, authenticated read endpoints, community filters on every query and dashboard count, cross-community write rejection, and removal of the remaining public soup-kitchen gateway routes) shipped on **2026-11-21**; the shared domain kernel and its six-repo adoption (canonical `Entity`, `ValueObject`, `IAggregateRoot`, and integer-id contracts in `TSQR.Common` 1.4.0) shipped on **2026-11-22**; the community lifecycle state guards and admin suspend/archive commands shipped on **2026-11-23**; the natural-key uniqueness and quick-register concurrency fix also shipped on **2026-11-23**; the soup-kitchen Event/Guest/Volunteer state-machine guards, the transition/donation command endpoints, and guest capacity enforcement shipped on **2026-11-24**; the autheo auth-endpoint rate limits (login 5/min, forgot-password 3/min, register 5/hour, per client IP) shipped on **2026-11-25**; the autheo RS256 migration (RS256 signing with a `kid`, the private key only in autheo, and public-key validation in the gateway and all services) also shipped on **2026-11-25**; the autheo JWKS endpoint and multi-key rotation (a `Jwt:PublicKeys` ring in `TSQR.Common.WebApi` 1.4.0, active-key validation, the public `/.well-known/jwks.json` endpoint, the gateway route, the deploy `JWT_PUBLIC_KEYS` wiring, and a live rotation-overlap test) shipped on **2026-11-26**. Sprint 10 is empty again; Sprints 9–19 remain available for the next pull-forward. Sprint 20 is kept empty as headroom.
+**Delivery record:** Sprint 10 (Nov 13–26) closed 41 board items: 113 SP of leaf work, without parent issues. The 2026-10-29 plan put 60 issues into sprints; 40 of them (199 SP) closed before their planned sprint started.
 
-**Identity contract:** [`sub` is the canonical cross-service identity](https://github.com/lstbob/tsqr-autheo/blob/main/docs/JWT-CONTRACT.md); the `mbr` claim is retired.
+**Current state (2026-11-27):** the audit v3.5 work (`tsqr-domain/thegoodandthebad-v3.5.md`) is scheduled in Sprints 11–16 in priority order: P0 security and data integrity first, then the tool-lib circulation loop, then P1 and P2. autheo#20 (per-service audiences) and tool-lib#75 (C-3) are Done in Sprint 11.
 
-### Sprint 9 (Oct 30–Nov 12)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+**Identity contract:** [`sub` is the canonical cross-service identity](https://github.com/lstbob/tsqr-autheo/blob/main/docs/JWT-CONTRACT.md); the `mbr` claim is retired. Each service validates its own audience (`tsqr-<service>`); the gateway exchanges the user token for a service token.
 
-### Sprint 10 (Nov 13–26)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+### Sprint 11 (Nov 27–Dec 10) — 34/40 SP
+| Item | SP | Priority | Repo |
+|------|----|----------|------|
+| [Bug] Guard repair and lost transitions and release the item when the queue is empty ✅ | 5 | P1 | tool-lib [#75](https://github.com/lstbob/tsqr-tool-lib/issues/75) |
+| [Tech] Per-service JWT audience / token exchange ✅ | 5 | — | autheo [#20](https://github.com/lstbob/tsqr-autheo/issues/20) |
+| [Bug] Refuse to sign tokens with HS256 outside Development | 1 | P0 | autheo [#23](https://github.com/lstbob/tsqr-autheo/issues/23) |
+| [Bug] Remove the HS256 fallback from shared JWT validation | 2 | P0 | common [#12](https://github.com/lstbob/tsqr-common/issues/12) |
+| [Bug] Stop the static role map from widening explicit token permissions | 2 | P0 | common [#13](https://github.com/lstbob/tsqr-common/issues/13) |
+| [Bug] Remove the commit retry that commits an empty transaction | 1 | P0 | communities [#32](https://github.com/lstbob/tsqr-communities/issues/32) |
+| [Bug] Stop logging reset and confirmation tokens in Production | 2 | P0 | deploy [#29](https://github.com/lstbob/tsqr-deploy/issues/29) |
+| [Bug] Deny by default at the gateway: FallbackPolicy, rate limiter and route-contract test | 5 | P0 | gateway [#12](https://github.com/lstbob/tsqr-gateway/issues/12) |
+| [Bug] Delete and rotate the committed identity Jwt:Key | 1 | P0 | identity [#18](https://github.com/lstbob/tsqr-identity/issues/18) |
+| [Bug] Close ticket and incident data exposure and the community-1 fallback | 5 | P0 | support [#19](https://github.com/lstbob/tsqr-support/issues/19) |
+| [Bug] End the active loan and calculate the fine on return | 5 | P0 | tool-lib [#73](https://github.com/lstbob/tsqr-tool-lib/issues/73) |
 
-### Sprint 11 (Nov 27–Dec 10)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+### Sprint 12 (Dec 11–Dec 24) — 34/40 SP
+| Item | SP | Priority | Repo |
+|------|----|----------|------|
+| [Tech] Add a CommunityId value object and ITenantContext with 403 on a missing claim | 3 | P0 | common [#15](https://github.com/lstbob/tsqr-common/issues/15) |
+| [Bug] Complete the reservation on loan and enforce the queue order | 5 | P0 | tool-lib [#74](https://github.com/lstbob/tsqr-tool-lib/issues/74) |
+| [Story] Raise the credential policy: PBKDF2 600 000, 12-character minimum, account lockout, revoke on reset | 5 | P1 | autheo [#24](https://github.com/lstbob/tsqr-autheo/issues/24) |
+| [Bug] Trust forwarded headers only from the gateway network so the rate limiter is per client | 3 | P1 | common [#14](https://github.com/lstbob/tsqr-common/issues/14) |
+| [Bug] Restrict community updates to the coordinators of that community | 2 | P1 | communities [#29](https://github.com/lstbob/tsqr-communities/issues/29) |
+| [Infra] Use one least-privilege PostgreSQL role per service | 3 | P1 | deploy [#30](https://github.com/lstbob/tsqr-deploy/issues/30) |
+| [Infra] Run every container as non-root with a hardened compose profile | 5 | P1 | deploy [#31](https://github.com/lstbob/tsqr-deploy/issues/31) |
+| [Bug] Validate avatar ids and file content | 2 | P1 | identity [#19](https://github.com/lstbob/tsqr-identity/issues/19) |
+| [Bug] Add soup-kitchen permissions for writes and guest reads | 3 | P1 | soup-kitchen [#33](https://github.com/lstbob/tsqr-soup-kitchen/issues/33) |
+| [Bug] Take actor ids from the token and guard renew and return | 3 | P1 | tool-lib [#67](https://github.com/lstbob/tsqr-tool-lib/issues/67) |
 
-### Sprint 12 (Dec 11–24)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+### Sprint 13 (Dec 25–Jan 7) — 32/40 SP
+| Item | SP | Priority | Repo |
+|------|----|----------|------|
+| [Tech] Issue token permissions from identity role grants of the active community | 5 | P1 | autheo [#26](https://github.com/lstbob/tsqr-autheo/issues/26) |
+| [Infra] Bind published ports to localhost and split the compose network | 2 | P1 | deploy [#32](https://github.com/lstbob/tsqr-deploy/issues/32) |
+| [Infra] Pin images and actions, and add Dependabot, CodeQL and image scanning | 5 | P1 | deploy [#34](https://github.com/lstbob/tsqr-deploy/issues/34) |
+| [Infra] Fail CI on vulnerable packages and new warnings | 2 | P1 | deploy [#35](https://github.com/lstbob/tsqr-deploy/issues/35) |
+| [Infra] Add a database backup job and a tested restore runbook | 3 | P1 | deploy [#37](https://github.com/lstbob/tsqr-deploy/issues/37) |
+| [Infra] Mount secrets as files and use one environment policy | 3 | P1 | deploy [#40](https://github.com/lstbob/tsqr-deploy/issues/40) |
+| [Tech] ADR: one IAM authority and community-scoped role grants | 2 | P1 | domain [#7](https://github.com/lstbob/tsqr-domain/issues/7) |
+| [Tech] Scope tool-lib reads and writes by tenant through ITenantContext | 5 | P1 | tool-lib [#68](https://github.com/lstbob/tsqr-tool-lib/issues/68) |
+| [Story] Model fine payment and waiver as a fine ledger | 5 | P1 | tool-lib [#71](https://github.com/lstbob/tsqr-tool-lib/issues/71) |
 
-### Sprint 13 (Dec 25–Jan 7)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+### Sprint 14 (Jan 8–Jan 21) — 35/40 SP
+| Item | SP | Priority | Repo |
+|------|----|----------|------|
+| [Tech] Harden Result<T> and add one Result-to-HTTP mapper | 3 | P1 | common [#18](https://github.com/lstbob/tsqr-common/issues/18) |
+| [Tech] Publish TSQR.Common.Persistence: async Dapper unit of work and xmin repository | 5 | P1 | common [#19](https://github.com/lstbob/tsqr-common/issues/19) |
+| [Tech] 3a — Choose the migration runner and baseline the 28 init scripts | 5 | P1 | deploy [#41](https://github.com/lstbob/tsqr-deploy/issues/41) |
+| [Tech] 3b — Run migrations at stack start and apply them twice in CI | 3 | P1 | deploy [#42](https://github.com/lstbob/tsqr-deploy/issues/42) |
+| [Tech] 6a — Adopt the shared kernel Entity and IAggregateRoot | 3 | P1 | identity [#21](https://github.com/lstbob/tsqr-identity/issues/21) |
+| [Tech] 6b — Add identity value objects and return Result from PendingEmailChange | 5 | P1 | identity [#22](https://github.com/lstbob/tsqr-identity/issues/22) |
+| [Story] Expire reservations and send reminders from a scheduled process manager | 5 | P1 | tool-lib [#72](https://github.com/lstbob/tsqr-tool-lib/issues/72) |
+| [Story] Add a loan read model and return the loan id on create | 3 | P1 | tool-lib [#76](https://github.com/lstbob/tsqr-tool-lib/issues/76) |
+| [Bug] Let regular members borrow with a tools.borrow permission | 3 | P1 | tool-lib [#77](https://github.com/lstbob/tsqr-tool-lib/issues/77) |
 
-### Sprint 14 (Jan 8–21)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+### Sprint 15 (Jan 22–Feb 4) — 33/40 SP
+| Item | SP | Priority | Repo |
+|------|----|----------|------|
+| [Tech] 6a — Add ticket comments | 3 | P1 | support [#20](https://github.com/lstbob/tsqr-support/issues/20) |
+| [Tech] 6b — Add ticket attachments with size and type limits | 3 | P1 | support [#21](https://github.com/lstbob/tsqr-support/issues/21) |
+| [Tech] 6c — Add ResolvedBy, ClosedBy and LastModified audit fields to tickets | 2 | P1 | support [#22](https://github.com/lstbob/tsqr-support/issues/22) |
+| [Tech] Replace the shared internal API key with per-caller service credentials | 3 | P2 | autheo [#25](https://github.com/lstbob/tsqr-autheo/issues/25) |
+| [Tech] Make Communities the owner of community membership | 5 | P2 | communities [#30](https://github.com/lstbob/tsqr-communities/issues/30) |
+| [Tech] Write a personal-data inventory with retention and erasure rules | 3 | P2 | domain [#6](https://github.com/lstbob/tsqr-domain/issues/6) |
+| [Tech] Send security response headers at the edge | 2 | P2 | gateway [#13](https://github.com/lstbob/tsqr-gateway/issues/13) |
+| [Tech] Split Donation and volunteer shifts out of the Event aggregate | 5 | P2 | soup-kitchen [#34](https://github.com/lstbob/tsqr-soup-kitchen/issues/34) |
+| [Tech] Reduce Member to borrower facts with one membership state machine | 5 | P2 | tool-lib [#69](https://github.com/lstbob/tsqr-tool-lib/issues/69) |
+| [Tech] Remove the dead tool-lib model: Location, Country, unused services and NoSQL contracts | 2 | P2 | tool-lib [#70](https://github.com/lstbob/tsqr-tool-lib/issues/70) |
 
-### Sprint 15 (Jan 22–Feb 4)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
+### Sprint 16 (Feb 5–Feb 18) — 33/40 SP
+| Item | SP | Priority | Repo |
+|------|----|----------|------|
+| [Tech] Give integration events stable names and versions | 3 | P2 | common [#16](https://github.com/lstbob/tsqr-common/issues/16) |
+| [Tech] Split liveness and readiness health checks | 2 | P2 | common [#17](https://github.com/lstbob/tsqr-common/issues/17) |
+| [Tech] Provide one internal API key authentication handler | 2 | P2 | common [#20](https://github.com/lstbob/tsqr-common/issues/20) |
+| [Tech] Tighten shared-kernel encapsulation and allow record value objects | 3 | P2 | common [#21](https://github.com/lstbob/tsqr-common/issues/21) |
+| [Tech] Return Result instead of exceptions in the communities domain | 2 | P2 | communities [#31](https://github.com/lstbob/tsqr-communities/issues/31) |
+| [Infra] Add a TLS-terminating edge proxy with HSTS | 3 | P2 | deploy [#33](https://github.com/lstbob/tsqr-deploy/issues/33) |
+| [Infra] Add .dockerignore everywhere and build tsqr-common once per pipeline | 2 | P2 | deploy [#36](https://github.com/lstbob/tsqr-deploy/issues/36) |
+| [Infra] Persist identity avatars on a named volume | 1 | P2 | deploy [#38](https://github.com/lstbob/tsqr-deploy/issues/38) |
+| [Infra] Add an OpenTelemetry collector and a trace backend profile | 3 | P2 | deploy [#39](https://github.com/lstbob/tsqr-deploy/issues/39) |
+| [Tech] Use typed resilient HTTP clients in the BFF and validate service URLs at startup | 3 | P2 | gateway [#14](https://github.com/lstbob/tsqr-gateway/issues/14) |
+| [Tech] Move avatar and profile logic from ProfileController into commands | 3 | P2 | identity [#20](https://github.com/lstbob/tsqr-identity/issues/20) |
+| [Tech] Inject TimeProvider and pass the time into aggregate methods | 3 | P2 | tool-lib [#78](https://github.com/lstbob/tsqr-tool-lib/issues/78) |
+| [Tech] Add Directory.Build.props and an architecture test, and fix the 34 CS8618 warnings | 3 | P2 | tool-lib [#79](https://github.com/lstbob/tsqr-tool-lib/issues/79) |
 
-### Sprint 16 (Feb 5–18)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
-
-### Sprint 17 (Feb 19–Mar 4)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
-
-### Sprint 18 (Mar 5–18)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
-
-### Sprint 19 (Mar 19–Apr 1)
-| Item | SP | Repo |
-|------|----|------|
-| _No scheduled items_ | — | — |
-
-**Scheduled: 0 SP.** Sprint 20 is kept empty as headroom; `defer` uses it and adds more iterations when needed. Everything else is in the Backlog (no iteration assignment).
+**Scheduled: 201 SP** in Sprints 11–16. Sprints 17–20 are empty headroom; `defer` uses them and adds more iterations when needed.
 
 ### Backlog (unscheduled)
 
-The remaining **29 SP across 5 open items** is intentionally unscheduled. It is pulled into the horizon as sprints complete, using `scripts/sprint` (see below). This includes **24 SP across 3 oversized items** that must be split before they can be scheduled. `tsqr-domain#1` remains an unestimated placeholder that needs triage.
+Only parent epics and one placeholder stay in the Backlog. Epics are tracked by **Sub-issues progress**:
 
-**Ready to schedule:**
+| Epic | Repo |
+|------|------|
+| [Tech] Adopt DB migration runner (DbUp/FluentMigrator); no `IF NOT EXISTS`/no version table today | deploy [#3](https://github.com/lstbob/tsqr-deploy/issues/3) |
+| Fixing AI slop | domain [#1](https://github.com/lstbob/tsqr-domain/issues/1) |
+| [Epic] Audit v3.5: security hardening | domain [#2](https://github.com/lstbob/tsqr-domain/issues/2) |
+| [Epic] Audit v3.5: domain model (DDD) corrections | domain [#3](https://github.com/lstbob/tsqr-domain/issues/3) |
+| [Epic] Audit v3.5: infrastructure, deployment and database | domain [#4](https://github.com/lstbob/tsqr-domain/issues/4) |
+| [Epic] Audit v3.5: C# and design-pattern improvements | domain [#5](https://github.com/lstbob/tsqr-domain/issues/5) |
+| [Tech] Introduce Entity base + IAggregateRoot + value objects (fixes audit §8 foundation) | identity [#6](https://github.com/lstbob/tsqr-identity/issues/6) |
+| [Tech] Ticket state machine + Incident aggregate + Comments/Attachments + pagination | support [#6](https://github.com/lstbob/tsqr-support/issues/6) |
+| [Epic] Close the tool-lib circulation loop (Part of lstbob/tsqr-domain#3) | tool-lib [#66](https://github.com/lstbob/tsqr-tool-lib/issues/66) |
 
-| Item | SP | Repo |
-|------|----|------|
-| Per-service JWT audience / token exchange | 5 | autheo [#20](https://github.com/lstbob/tsqr-autheo/issues/20) |
-
-**Oversized items (>5 SP) — must be split before scheduling:**
-
-| Item | SP | Repo |
-|------|----|------|
-| DB migration runner (DbUp/FluentMigrator) | 8 | deploy [#3](https://github.com/lstbob/tsqr-deploy/issues/3) |
-| Entity base + IAggregateRoot | 8 | identity [#6](https://github.com/lstbob/tsqr-identity/issues/6) |
-| Ticket state machine + Incident aggregate | 8 | support [#6](https://github.com/lstbob/tsqr-support/issues/6) |
-
-The 5 SP audience item is ready; the oversized items above must be split before they can be scheduled.
-
-Per `PROCESS.md`, any issue >5 SP must be split into sub-issues where each part is ≤5 SP.
+`tsqr-domain#1` is an unestimated placeholder that needs triage.
 
 ---
 
 ## Rescheduling & sprint workflow
 
-The `scripts/sprint` CLI enforces the 5 SP capacity and cascades changes. It is a dry-run by default; add `--apply` to write.
+The `scripts/sprint` CLI enforces the 40 SP capacity and the 5 SP item limit, and cascades changes. It is a dry-run by default; add `--apply` to write.
 
 > **Full runbook:** see **[docs/SPRINT-WORKFLOW.md](docs/SPRINT-WORKFLOW.md)** for step-by-step add/defer/move/rebalance instructions, recipes, and troubleshooting.
 
