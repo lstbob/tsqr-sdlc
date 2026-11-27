@@ -37,9 +37,10 @@ Every write command is a **dry run** until you add `--apply`. Always read the dr
 
 | Rule | Why |
 |---|---|
-| Max **5 SP** per sprint | Solo developer, 2-week sprint |
+| Max **40 SP** per sprint (`SPRINT_CAPACITY`) | Solo developer, 2-week sprint, measured speed about 110 SP |
 | Parent epics stay unscheduled | Epics are tracked by Sub-issues progress; only sub-issues get sprint assignments |
-| Items **>5 SP** are refused | Split them first, per `PROCESS.md` |
+| Items **>5 SP** are refused (`SPRINT_MAX_ITEM_SP`) | Split them first, per `PROCESS.md` |
+| Done issues keep their sprint | The sprint value is the delivery record; `audit` and `rebalance` ignore Done issues |
 | `defer` cascades forward | Later scheduled items shift +1 sprint so capacity is preserved |
 | `add` does not cascade | It only places one backlog item into a sprint with room |
 | Every write is a dry run by default | Review the cascade before changing the board |
@@ -147,14 +148,14 @@ If `--to` is omitted, the item goes to the current sprint.
 
 ### Real example
 
-Sprint 9 currently has **3/5 SP**, so a 2 SP item fits exactly:
+Sprint 9 has **38/40 SP**, so a 2 SP item fits exactly:
 
 ```bash
 ./scripts/sprint add tsqr-tool-lib#31 --to 9
 ./scripts/sprint add tsqr-tool-lib#31 --to 9 --apply
 ```
 
-The dry run shows the item and the resulting sprint load. The `--apply` line actually fills Sprint 9 to 5/5.
+The dry run shows the item and the resulting sprint load. The `--apply` line fills Sprint 9 to 40/40.
 
 ### `add` refuses when
 
@@ -162,7 +163,7 @@ The dry run shows the item and the resulting sprint load. The `--apply` line act
 - the item is already scheduled (use `move` instead)
 - the item is larger than 5 SP (split it first)
 - the target sprint is not active (choose an active sprint, or run `extend` first if it is beyond the horizon)
-- the destination would exceed 5 SP
+- the destination would exceed the 40 SP capacity
 
 `add` does **not** cascade. If the destination is full, either choose another sprint or free capacity with `defer`/`move`.
 
@@ -242,7 +243,7 @@ Example: if Sprint 9 has 2 SP free, a 2 SP item from a later sprint can be pulle
 ./scripts/sprint move <repo>#<num> --to 9
 ```
 
-If the destination would exceed 5 SP, the command refuses.
+If the destination would exceed the 40 SP capacity, the command refuses.
 
 ### `move` refuses when
 
@@ -468,7 +469,7 @@ Split the issue into sub-issues of ≤5 SP each, then add the sub-issues.
 
 Use `add` for backlog items. `move` and `defer` only work on items that already have a sprint.
 
-### `Sprint N has X SP; adding Y SP would exceed 5`
+### `Sprint N has X SP; adding Y SP would exceed 40`
 
 Free capacity first:
 

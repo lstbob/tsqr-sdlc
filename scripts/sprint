@@ -21,6 +21,7 @@ import sys
 
 from sprintlib import (
     CAPACITY,
+    MAX_ITEM_SP,
     active_by_number,
     apply_iteration,
     audit,
@@ -76,9 +77,9 @@ def validate_deferrable(item: dict, capacity: int) -> int:
     if estimate is None:
         print(f"WARNING: {item['key']} has no estimate; treating it as 0 SP", file=sys.stderr)
         estimate = 0
-    if estimate > capacity:
+    if estimate > MAX_ITEM_SP:
         raise SystemExit(
-            f"{item['key']} is {estimate} SP, over the {capacity} SP capacity; split it first"
+            f"{item['key']} is {estimate} SP, over the {MAX_ITEM_SP} SP item limit; split it first"
         )
     return estimate
 
@@ -257,9 +258,9 @@ def cmd_add(args: argparse.Namespace) -> int:
     if estimate is None:
         print(f"WARNING: {item['key']} has no estimate; treating it as 0 SP", file=sys.stderr)
         estimate = 0
-    if estimate > args.capacity:
+    if estimate > MAX_ITEM_SP:
         raise SystemExit(
-            f"{item['key']} is {estimate} SP, over the {args.capacity} SP capacity; split it first"
+            f"{item['key']} is {estimate} SP, over the {MAX_ITEM_SP} SP item limit; split it first"
         )
 
     active = active_by_number(state)
@@ -338,9 +339,9 @@ def cmd_rebalance(args: argparse.Namespace) -> int:
         number = sprint_number((item["iteration"] or {}).get("title"))
         if number is None or number < start:
             continue
-        if item["is_epic"]:
+        if item["is_epic"] or item["status"] == "Done":
             continue
-        if (item["estimate"] or 0) > args.capacity:
+        if (item["estimate"] or 0) > MAX_ITEM_SP:
             oversized.append(item)
             continue
         candidates.append(item)
@@ -390,7 +391,7 @@ def cmd_rebalance(args: argparse.Namespace) -> int:
         print(f"  {title:9} {load:2}/{args.capacity} SP  " + ", ".join(i["key"] for i in bucket))
 
     if oversized:
-        print("\nLeft untouched (over capacity, split first):")
+        print(f"\nLeft untouched (over the {MAX_ITEM_SP} SP item limit, split first):")
         for item in oversized:
             print(f"  {item['key']:24} {item['estimate']} SP  {item['title'][:60]}")
 
