@@ -15,7 +15,7 @@ Runbook for the **tsqr** GitHub Project (#4). Use this when you need to add, def
 ## Quick start
 
 ```bash
-cd /home/lbobc/dev/tsqr-sdlc
+cd /home/lbobc/dev/tsqr/tsqr-sdlc
 
 ./scripts/sprint status          # inspect current loads
 ./scripts/sprint audit           # check for rule violations
@@ -53,7 +53,7 @@ Every write command is a **dry run** until you add `--apply`. Always read the dr
 Run all commands from the repository root:
 
 ```bash
-cd /home/lbobc/dev/tsqr-sdlc
+cd /home/lbobc/dev/tsqr/tsqr-sdlc
 ```
 
 Check GitHub CLI authentication:
