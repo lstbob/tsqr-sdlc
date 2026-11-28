@@ -24,6 +24,7 @@ REPOS = [
     "tsqr-tool-lib",
     "tsqr-communities",
     "tsqr-soup-kitchen",
+    "tsqr-learning",
     "tsqr-support",
     "tsqr-gateway",
 ]
